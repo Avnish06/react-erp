@@ -1,0 +1,39 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to Ubuntu Server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          port: ${{ secrets.SERVER_PORT }}
+          script: |
+            # Navigate to the deployment directory or clone it if it doesn't exist
+            if [ ! -d "/var/www/react-erp" ]; then
+              mkdir -p /var/www
+              cd /var/www
+              git clone https://${{ secrets.GIT_PAT }}@github.com/Avnish06/react-erp.git
+            fi
+            
+            cd /var/www/react-erp
+            git pull origin main
+            
+            # Install Backend Dependencies & Restart
+            cd server
+            npm install
+            pm2 restart react-erp-backend || pm2 start server.js --name "react-erp-backend"
+            pm2 save
+            
+            # Install Frontend Dependencies & Build
+            cd ../Webfrontend
+            npm install
+            npm run build
