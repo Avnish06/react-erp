@@ -6,23 +6,112 @@ const { verifyToken, checkPermission } = require('../middleware/auth');
 const { sendUniqueIdEmail } = require('../utils/mailer');
 const { generateSequentialId } = require('../utils/idGenerator');
 const { validatePassword } = require('../utils/security');
+const axios = require('axios');
 
-// Get all employees for dropdowns (used in project/task assignment)
-router.get('/list', (req, res) => {
-  const query = `
-    SELECT u.id, u.name, d.name as department
-    FROM users u
-    LEFT JOIN departments d ON u.department_id = d.id
-    WHERE u.status = 'Active'
-    ORDER BY u.name ASC
-  `;
-  db.query(query, (err, results) => {
-    if (err) {
-      console.error('Error fetching employee list:', err);
-      return res.status(500).json({ success: false, message: 'Error fetching employees' });
+const COLOVO_URL = process.env.COLOVO_WORKSPACE_URL || 'http://127.0.0.1:8000';
+const ERP_SECRET = process.env.ERP_SHARED_SECRET    || 'default-erp-secret-12345';
+
+// Helper: push profile update to Colovo Workspace
+async function pushProfileToColovo(email, fields) {
+  try {
+    await axios.post(`${COLOVO_URL}/api/sync-profile`, { employee_email: email, ...fields }, {
+      headers: { 'X-ERP-SECRET': ERP_SECRET }
+    });
+    console.log(`[Profile Sync] Updated Colovo profile for ${email}`);
+  } catch (err) {
+    console.error(`[Profile Sync] Failed to push profile to Colovo for ${email}:`, err.message);
+  }
+}
+
+// Helper: send notification to employee in Colovo Workspace
+async function notifyColovo(email, title, message, type, url) {
+  try {
+    await axios.post(`${COLOVO_URL}/api/sync-onboarding-step`, {
+      employee_email: email,
+      document_type: type
+    }, { headers: { 'X-ERP-SECRET': ERP_SECRET } });
+    console.log(`[Notify Colovo] Sent "${title}" notification to ${email}`);
+  } catch (err) {
+    console.error(`[Notify Colovo] Failed for ${email}:`, err.message);
+  }
+}
+
+// Get all employees for dropdowns (fetch from Colovo Workspace and map to ERP ID)
+router.get('/list', async (req, res) => {
+  try {
+    const colovoDb = require('../config/db').colovoPromise;
+    
+    // 1. Fetch all employees from Colovo Workspace
+    const [colovoUsers] = await colovoDb.query('SELECT name, email, password FROM users');
+    
+    // 2. Fetch all user identities from ERP to map emails to valid ERP IDs (needed for foreign keys)
+    const erpQuery = `
+      SELECT ui.id, ui.email, u.name as erp_name
+      FROM user_identities ui
+      JOIN users u ON ui.id = u.id
+      WHERE u.status = 'Active'
+    `;
+    const [erpUsers] = await db.promise.query(erpQuery);
+
+    const erpEmailMap = new Map(erpUsers.map(u => [u.email, u]));
+
+    const results = [];
+    
+    // Merge logic: Show all active ERP users. If they exist in Colovo, tag them!
+    // If they exist in Colovo but NOT in ERP, we will auto-sync them into ERP!
+    for (const cu of colovoUsers) {
+      const erpRecord = erpEmailMap.get(cu.email);
+      if (erpRecord) {
+        results.push({
+          id: erpRecord.id,
+          name: `${cu.name} (Colovo Workspace)`,
+          department: 'Colovo Sync'
+        });
+        erpEmailMap.delete(cu.email); // Remove so we don't duplicate
+      } else {
+        // Auto-sync this missing Colovo employee into ERP
+        try {
+          // 1. Insert into user_identities (role_id 3 = Employee ERP)
+          const [insertUI] = await db.promise.query(
+            'INSERT INTO user_identities (email, password, role_id) VALUES (?, ?, ?)',
+            [cu.email, cu.password, 3]
+          );
+          const newUserId = insertUI.insertId;
+          
+          // 2. Insert into employees profile
+          const empId = 'EMP-SYNC-' + Math.floor(Math.random() * 100000);
+          await db.promise.query(
+            'INSERT INTO employees (user_id, name, employee_id, status, company_name) VALUES (?, ?, ?, ?, ?)',
+            [newUserId, cu.name, empId, 'Active', 'Colovo Workspace']
+          );
+
+          results.push({
+            id: newUserId,
+            name: `${cu.name} (Colovo Workspace)`,
+            department: 'Colovo Sync'
+          });
+        } catch (syncErr) {
+          console.error('Failed to auto-sync Colovo user to ERP:', cu.email, syncErr);
+        }
+      }
     }
+
+    // Add remaining ERP employees who are NOT in Colovo Workspace yet
+    for (const [email, erpRecord] of erpEmailMap.entries()) {
+      results.push({
+        id: erpRecord.id,
+        name: erpRecord.erp_name,
+        department: 'ERP Only'
+      });
+    }
+
+    results.sort((a, b) => a.name.localeCompare(b.name));
+
     res.json({ success: true, data: results });
-  });
+  } catch (err) {
+    console.error('Error fetching employee list from Colovo Workspace:', err);
+    res.status(500).json({ success: false, message: 'Error fetching employees' });
+  }
 });
 
 // Get all employees (Admin/Super Admin only)
@@ -41,8 +130,9 @@ router.get('/', verifyToken, checkPermission('view_employees'), (req, res) => {
 
 // Add new employee (role-restricted)
 router.post('/', verifyToken, checkPermission('manage_users'), async (req, res) => {
-  const { name, email, password, role_id, department_id } = req.body;
+  const { name, email, password, role_id, department_id, company_name } = req.body;
   const creatorRole = req.user.role; // from JWT token
+  const finalCompanyName = (creatorRole === 'Super Admin' || creatorRole === 'Developer') && company_name ? company_name : req.company_name;
 
   // Enforce role-based creation restrictions
   const roleId = parseInt(role_id);
@@ -90,21 +180,21 @@ router.post('/', verifyToken, checkPermission('manage_users'), async (req, res) 
         // 2. Select profile table based on role
         let profileTable = 'employees';
         let profileQuery = 'INSERT INTO employees (user_id, name, employee_id, department_id, status, company_name) VALUES (?, ?, ?, ?, ?, ?)';
-        let params = [userId, name, employee_id, department_id || null, status, req.company_name];
+        let params = [userId, name, employee_id, department_id || null, status, finalCompanyName];
 
         if (roleId === 1) {
           profileTable = 'superadmins';
           const vendor_id = `VDR-${Math.floor(1000 + Math.random() * 9000)}`;
           profileQuery = 'INSERT INTO superadmins (user_id, name, employee_id, vendor_id, status, company_name) VALUES (?, ?, ?, ?, ?, ?)';
-          params = [userId, name, employee_id, vendor_id, status, req.company_name];
+          params = [userId, name, employee_id, vendor_id, status, finalCompanyName];
         } else if (roleId === 2) {
           profileTable = 'admins';
           profileQuery = 'INSERT INTO admins (user_id, name, employee_id, status, company_name) VALUES (?, ?, ?, ?, ?)';
-          params = [userId, name, employee_id, status, req.company_name];
+          params = [userId, name, employee_id, status, finalCompanyName];
         } else if (roleId === 5) {
           profileTable = 'developers';
           profileQuery = 'INSERT INTO developers (user_id, name, employee_id, status, company_name) VALUES (?, ?, ?, ?, ?)';
-          params = [userId, name, employee_id, status, req.company_name];
+          params = [userId, name, employee_id, status, finalCompanyName];
         }
 
         connection.query(profileQuery, params, (err) => {
@@ -126,11 +216,40 @@ router.post('/', verifyToken, checkPermission('manage_users'), async (req, res) 
 
             connection.release();
 
-            // If the account is being created as Active (Super Admin/Developer), send email immediately
-            if (status === 'Active') {
-              sendUniqueIdEmail(email, name, employee_id).catch(err => {
-                console.error('[Manual Creation] Failed to send ID email:', err);
-              });
+            // Send welcome email immediately (with their login credentials)
+            sendUniqueIdEmail(email, name, employee_id, password).catch(err => {
+              console.error('[Manual Creation] Failed to send Welcome email:', err);
+            });
+
+            // Sync to Laravel Workspace via direct DB connection
+            if (profileTable === 'employees') {
+              const colovoDb = require('../config/db').colovoPromise;
+              const bcrypt = require('bcryptjs'); // Laravel uses bcrypt
+              (async () => {
+                try {
+                  const companyName = finalCompanyName || 'Colvo Corporation';
+                  const [companyRes] = await colovoDb.query('SELECT id FROM companies WHERE name = ?', [companyName]);
+                  let companyId = 1;
+                  if (companyRes.length > 0) {
+                    companyId = companyRes[0].id;
+                  } else {
+                    const [newComp] = await colovoDb.query(
+                      'INSERT INTO companies (name, email, address, created_at, updated_at) VALUES (?, ?, ?, NOW(), NOW())',
+                      [companyName, `contact@${companyName.toLowerCase().replace(/\s+/g, '')}.com`, 'Unknown']
+                    );
+                    companyId = newComp.insertId;
+                  }
+
+                  const hashedPass = await bcrypt.hash(password, 10);
+                  await colovoDb.query(
+                    'INSERT INTO users (name, email, password, company_id, role, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NOW(), NOW())',
+                    [name, email, hashedPass, companyId, 'employee']
+                  );
+                  console.log('[Sync] Successfully created employee in Laravel database.');
+                } catch (err) {
+                  console.error('[Sync] Failed to sync employee to workspace DB:', err.message);
+                }
+              })();
             }
 
             res.json({ success: true, message: `Account created with ID: ${employee_id} (Status: ${status})`, id: userId, employee_id, status });
@@ -197,6 +316,17 @@ router.put('/:id', verifyToken, checkPermission('manage_users'), (req, res) => {
               });
             }
             connection.release();
+
+            // --- Push profile update to Colovo Workspace ---
+            // Get the email for this user to push to Colovo
+            db.query('SELECT email FROM user_identities WHERE id = ?', [userId], (emailErr, emailRows) => {
+              if (!emailErr && emailRows.length > 0) {
+                const employeeEmail = emailRows[0].email;
+                pushProfileToColovo(employeeEmail, { name, department: null, status });
+              }
+            });
+            // -----------------------------------------------
+
             res.json({ success: true, message: 'Employee updated successfully' });
           });
         });
@@ -288,6 +418,8 @@ router.put('/:id/profile-image', verifyToken, (req, res) => {
 
 // Get all employees and their document statuses (Admin/Super Admin only)
 router.get('/docs/summary', verifyToken, (req, res) => {
+  const companyName = req.header('x-company-name');
+
   const query = `
     SELECT 
       u.id, 
@@ -301,10 +433,12 @@ router.get('/docs/summary', verifyToken, (req, res) => {
     JOIN roles r ON u.role_id = r.id
     LEFT JOIN employee_documents ed ON u.id = ed.user_id
     WHERE r.name IN ('Employee ERP', 'Employee CRM', 'Admin')
+      AND u.status = 'Active'
+      AND u.company_name = ?
     ORDER BY u.id, ed.doc_type;
   `;
 
-  db.query(query, (err, results) => {
+  db.query(query, [companyName], (err, results) => {
     if (err) {
       console.error('Error fetching document summary:', err);
       return res.status(500).json({ success: false, message: 'Error fetching document summary' });
@@ -382,13 +516,12 @@ router.post('/:id/documents', verifyToken, (req, res) => {
   });
 });
 
-// Update document status (Super Admin/Developer only)
+// Update document status (Super Admin/Developer only) + notify employee in Colovo
 router.put('/:id/documents/status', verifyToken, (req, res) => {
   const { doc_type, status } = req.body;
   const targetId = req.params.id;
   const userRole = req.user.role;
 
-  // Explicitly restrict to Super Admin and Developer
   if (userRole !== 'Super Admin' && userRole !== 'Developer') {
     return res.status(403).json({ success: false, message: 'Only Super Admins or Developers can verify documents.' });
   }
@@ -403,6 +536,28 @@ router.put('/:id/documents/status', verifyToken, (req, res) => {
       console.error('Error updating document status:', err);
       return res.status(500).json({ success: false, message: 'Error updating status' });
     }
+
+    // --- Notify employee in Colovo Workspace about their document status ---
+    db.query('SELECT email FROM user_identities WHERE id = ?', [targetId], (emailErr, emailRows) => {
+      if (!emailErr && emailRows.length > 0) {
+        const employeeEmail = emailRows[0].email;
+        const statusLabel = status === 'Approved' ? 'approved ✅' : status === 'Rejected' ? 'rejected ❌' : 'updated';
+        // Use the leave-status endpoint for a general notification (reuse infrastructure)
+        axios.post(`${COLOVO_URL}/api/sync-leave-status`, {
+          employee_email : employeeEmail,
+          status         : status === 'Approved' ? 'approved' : 'rejected',
+          reason         : `Your document "${doc_type}" has been ${statusLabel} by HR.`
+        }, {
+          headers: { 'X-ERP-SECRET': ERP_SECRET }
+        }).then(() => {
+          console.log(`[Doc Status] Notification sent to ${employeeEmail} about ${doc_type}: ${status}`);
+        }).catch(syncErr => {
+          console.error('[Doc Status] Failed to notify Colovo:', syncErr.message);
+        });
+      }
+    });
+    // -----------------------------------------------------------------------
+
     res.json({ success: true, message: `Document ${status.toLowerCase()} successfully.` });
   });
 });

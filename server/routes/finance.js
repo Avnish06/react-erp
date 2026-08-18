@@ -70,4 +70,29 @@ router.post('/ai-categorize', verifyToken, (req, res) => {
   res.json({ success: true, category });
 });
 
+// PUT /api/finance/transactions/:id
+router.put('/transactions/:id', verifyToken, (req, res) => {
+  const { id } = req.params;
+  const { type, category, amount, currency, exchange_rate, amount_base, date, description, is_recurring } = req.body;
+  
+  db.query(
+    'UPDATE finance_transactions SET type=?, category=?, amount=?, currency=?, exchange_rate=?, amount_base=?, date=?, description=?, is_recurring=? WHERE id=?',
+    [type, category, amount, currency || 'INR', exchange_rate || 1, amount_base || amount, date, description, is_recurring || false, id],
+    (err, result) => {
+      if (err) return res.status(500).json({ success: false, error: err.message });
+      res.json({ success: true });
+    }
+  );
+});
+
+// DELETE /api/finance/transactions/:id
+router.delete('/transactions/:id', verifyToken, (req, res) => {
+  const { id } = req.params;
+  
+  db.query('DELETE FROM finance_transactions WHERE id=?', [id], (err, result) => {
+    if (err) return res.status(500).json({ success: false, error: err.message });
+    res.json({ success: true });
+  });
+});
+
 module.exports = router;

@@ -14,6 +14,40 @@ router.post('/announcements', verifyToken, (req, res) => {
   const query = 'INSERT INTO announcements (title, content, created_by) VALUES (?, ?, ?)';
   db.query(query, [title, content, req.user.id], (err, result) => {
     if (err) return res.status(500).json({ success: false, message: 'Error creating announcement' });
+    
+    // --- WORKSPACE SYNC ---
+    // Instantly push this announcement to the Laravel Workspace database
+    try {
+      const { colovoPromise } = require('../config/db');
+      const crypto = require('crypto');
+      
+      // Default to company_id = 1 if company handling isn't fully separated yet
+      const insertColovoQuery = 'INSERT INTO announcements (company_id, title, description, created_at, updated_at) VALUES (?, ?, ?, NOW(), NOW())';
+      
+      colovoPromise.execute(insertColovoQuery, [1, title, content])
+        .then(async () => {
+          console.log('[Workspace Sync] Announcement inserted successfully into Colovo DB');
+          
+          // ALSO send a Notification to the Bell Icon for every user in the company!
+          const [users] = await colovoPromise.query('SELECT id FROM users WHERE company_id = ?', [1]);
+          for (let u of users) {
+             const notifId = crypto.randomUUID();
+             const dataJson = JSON.stringify({ title: title, message: content, type: 'announcement' });
+             await colovoPromise.execute(
+               'INSERT INTO notifications (id, type, notifiable_type, notifiable_id, data, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NOW(), NOW())',
+               [notifId, 'App\\Notifications\\NewAnnouncement', 'App\\Models\\User', u.id, dataJson]
+             );
+          }
+          console.log('[Workspace Sync] Bell notifications pushed to all employees!');
+        })
+        .catch(e => {
+          console.error('[Workspace Sync Error] Failed to insert announcement:', e.message);
+        });
+    } catch (e) {
+      console.error('[Workspace Sync Error] Missing config:', e.message);
+    }
+    // -----------------------
+
     res.json({ success: true, message: 'Announcement created successfully', id: result.insertId });
   });
 });
@@ -43,6 +77,33 @@ router.post('/send', verifyToken, (req, res) => {
   const query = 'INSERT INTO notifications (user_id, title, message, type, triggered_by, action_type) VALUES (?, ?, ?, ?, ?, ?)';
   db.query(query, [user_id, title, message, type || 'info', req.user.id, 'MANUAL_NOTIFICATION'], (err, result) => {
     if (err) return res.status(500).json({ success: false, message: 'Error sending notification' });
+
+    // --- WORKSPACE SYNC ---
+    // Instantly push this notification to the Laravel Workspace database
+    db.query('SELECT email FROM users WHERE id = ?', [user_id], async (userErr, userRows) => {
+      if (!userErr && userRows.length > 0) {
+        const email = userRows[0].email;
+        try {
+          const { colovoPromise } = require('../config/db');
+          const crypto = require('crypto');
+          const [colovoUsers] = await colovoPromise.query('SELECT id FROM users WHERE email = ?', [email]);
+          if (colovoUsers.length > 0) {
+            const colovoUserId = colovoUsers[0].id;
+            const notifId = crypto.randomUUID();
+            const dataJson = JSON.stringify({ title: title, message: message, type: type || 'info' });
+            await colovoPromise.execute(
+              'INSERT INTO notifications (id, type, notifiable_type, notifiable_id, data, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NOW(), NOW())',
+              [notifId, 'App\\Notifications\\GeneralNotification', 'App\\Models\\User', colovoUserId, dataJson]
+            );
+            console.log('[Workspace Sync] Manual notification synced to Colovo user ID:', colovoUserId);
+          }
+        } catch (syncErr) {
+          console.error('[Workspace Sync Error] Failed to sync manual notification:', syncErr.message);
+        }
+      }
+    });
+    // -----------------------
+
     res.json({ success: true, message: 'Notification sent successfully', id: result.insertId });
   });
 });

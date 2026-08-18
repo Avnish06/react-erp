@@ -14,32 +14,32 @@ router.post('/', verifyToken, async (req, res) => {
   try {
     // Intent: Revenue / Finance
     if (query.includes('revenue') || query.includes('income') || query.includes('money') || query.includes('sales')) {
-      const [results] = await db.promise().query("SELECT SUM(amount_base) as total FROM finance_transactions WHERE type = 'income'");
+      const [results] = await db.promise.query("SELECT SUM(amount_base) as total FROM finance_transactions WHERE type = 'income'");
       const total = results[0].total || 0;
       responseText = `Based on our financial records, the total revenue (income) recorded is **$${Number(total).toLocaleString()}**.`;
     } 
     // Intent: Clients / CRM
     else if (query.includes('client') || query.includes('customer')) {
-      const [results] = await db.promise().query("SELECT COUNT(*) as count FROM customers WHERE stage = 'Active' OR stage = 'Won'");
+      const [results] = await db.promise.query("SELECT COUNT(*) as count FROM customers WHERE stage = 'Active' OR stage = 'Won'");
       const count = results[0].count || 0;
       responseText = `We currently have **${count} active clients** being managed in the CRM.`;
     }
     // Intent: Proposals
     else if (query.includes('proposal')) {
-      const [results] = await db.promise().query("SELECT COUNT(*) as count, SUM(value) as total_val FROM proposals WHERE status != 'Approved'");
+      const [results] = await db.promise.query("SELECT COUNT(*) as count, SUM(value) as total_val FROM proposals WHERE status != 'Approved'");
       const count = results[0].count || 0;
       const val = results[0].total_val || 0;
       responseText = `There are **${count} pending proposals** waiting for approval, with a combined estimated value of **$${Number(val).toLocaleString()}**.`;
     }
     // Intent: Employees / HR
     else if (query.includes('employee') || query.includes('staff') || query.includes('team')) {
-      const [results] = await db.promise().query("SELECT COUNT(*) as count FROM users WHERE role LIKE '%Employee%'");
+      const [results] = await db.promise.query("SELECT COUNT(*) as count FROM users WHERE role LIKE '%Employee%'");
       const count = results[0].count || 0;
       responseText = `We have **${count} employees** currently registered in the ERP system.`;
     }
     // Intent: Projects
     else if (query.includes('project') || query.includes('task')) {
-      const [results] = await db.promise().query("SELECT COUNT(*) as count FROM projects WHERE status = 'Active' OR status = 'In Progress'");
+      const [results] = await db.promise.query("SELECT COUNT(*) as count FROM projects WHERE status = 'Active' OR status = 'In Progress'");
       const count = results[0].count || 0;
       responseText = `There are **${count} active projects** currently being worked on by the team.`;
     }

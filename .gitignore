@@ -1,0 +1,87 @@
+# ======================================
+# Node.js Dependencies
+# ======================================
+client/node_modules/
+server/node_modules/
+Webfrontend/node_modules/
+node_modules/
+
+# Ignore backups, archives and scripts in the root
+*.zip
+*.sql
+*.ps1
+*.py
+uploads/
+
+# ======================================
+# Environment Variables
+# ======================================
+client/.env
+client/.env.*
+server/.env
+server/.env.*
+
+# ======================================
+# Build Files
+# ======================================
+client/dist/
+client/build/
+server/dist/
+server/build/
+
+# ======================================
+# Logs
+# ======================================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ======================================
+# MySQL Local Data (Do NOT upload)
+# ======================================
+mysql_data/
+
+# ======================================
+# IDE Files
+# ======================================
+.vscode/
+.idea/
+
+# ======================================
+# Operating System Files
+# ======================================
+.DS_Store
+Thumbs.db
+
+# ======================================
+# Cache
+# ======================================
+.cache/
+.eslintcache
+
+# ======================================
+# Runtime Files
+# ======================================
+*.pid
+*.seed
+*.pid.lock
+
+# ======================================
+# Uploads (Optional)
+# Uncomment if uploads contain user files
+# ======================================
+# uploads/
+
+# ======================================
+# Coverage
+# ======================================
+coverage/
+
+# ======================================
+# Temporary Files
+# ======================================
+tmp/
+temp/

@@ -12,18 +12,18 @@ if (!fs.existsSync(BACKUP_DIR)) fs.mkdirSync(BACKUP_DIR, { recursive: true });
 
 // Helper to generate SQL dump
 const generateSqlDump = async () => {
-  const [tables] = await db.promise().query('SHOW TABLES');
+  const [tables] = await db.promise.query('SHOW TABLES');
   const tableNames = tables.map(row => Object.values(row)[0]);
 
   let sqlDump = `-- ERPMaster Database Backup\n-- Generated: ${new Date().toISOString()}\n-- Database: ${process.env.DB_NAME || 'management_system'}\n\nSET FOREIGN_KEY_CHECKS=0;\n\n`;
 
   for (const table of tableNames) {
-    const [createTableResult] = await db.promise().query(`SHOW CREATE TABLE \`${table}\``);
+    const [createTableResult] = await db.promise.query(`SHOW CREATE TABLE \`${table}\``);
     const createTableSql = createTableResult[0]['Create Table'];
     sqlDump += `DROP TABLE IF EXISTS \`${table}\`;\n`;
     sqlDump += `${createTableSql};\n\n`;
 
-    const [rows] = await db.promise().query(`SELECT * FROM \`${table}\``);
+    const [rows] = await db.promise.query(`SELECT * FROM \`${table}\``);
     if (rows.length > 0) {
       sqlDump += `INSERT INTO \`${table}\` VALUES `;
       const values = rows.map(row => {
@@ -78,13 +78,13 @@ router.get('/list', verifyToken, async (req, res) => {
 router.get('/stats', verifyToken, async (req, res) => {
   if (!isAllowedRole(req.user.role)) return res.status(403).json({ success: false, message: 'Access denied' });
   try {
-    const [tables] = await db.promise().query('SHOW TABLES');
+    const [tables] = await db.promise.query('SHOW TABLES');
     const tableCount = tables.length;
 
     let totalRows = 0;
     for (const table of tables) {
       const tableName = Object.values(table)[0];
-      const [countResult] = await db.promise().query(`SELECT COUNT(*) as cnt FROM \`${tableName}\``);
+      const [countResult] = await db.promise.query(`SELECT COUNT(*) as cnt FROM \`${tableName}\``);
       totalRows += countResult[0].cnt;
     }
 

@@ -23,37 +23,32 @@ const DB_CONFIG = {
 // ─── Create Pool ───────────────────────────────────────────────────────────────
 const pool = mysql.createPool(DB_CONFIG);
 
+const COLOVO_DB_CONFIG = {
+  ...DB_CONFIG,
+  user: process.env.COLOVO_DB_USER || process.env.DB_USER,
+  password: process.env.COLOVO_DB_PASSWORD || process.env.DB_PASSWORD,
+  database: process.env.COLOVO_DB_NAME || 'colovo'
+};
+const colovoPool = mysql.createPool(COLOVO_DB_CONFIG);
+
 // ─── Verify Connection on Startup ─────────────────────────────────────────────
 function verifyConnection() {
   pool.getConnection((err, connection) => {
     if (err) {
-      console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.error('  ❌  DATABASE CONNECTION FAILED');
-      console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.error(`  Host     : ${DB_CONFIG.host}:${DB_CONFIG.port}`);
-      console.error(`  Database : ${DB_CONFIG.database}`);
-      console.error(`  User     : ${DB_CONFIG.user}`);
-      console.error(`  Error    : ${err.code} — ${err.message}`);
-      console.error('');
-      console.error('  ➜  FIX: Make sure MySQL is installed and running.');
-      console.error('         • XAMPP  → Open XAMPP Control Panel → Start MySQL');
-      console.error('         • MySQL  → Run: net start mysql80  (in admin terminal)');
-      console.error('         • Check .env for correct DB_HOST / DB_USER / DB_PASSWORD');
-      console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-
-      // Retry after 5 seconds instead of crashing
-      console.log('  🔄  Retrying DB connection in 5 seconds...\n');
-      setTimeout(verifyConnection, 5000);
-      return;
+      console.error('❌ MAIN DATABASE FAILED:', err.code, err.message);
+    } else {
+      console.log('✅ MAIN DATABASE CONNECTED');
+      connection.release();
     }
+  });
 
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('  ✅  DATABASE CONNECTED SUCCESSFULLY');
-    console.log(`  Host     : ${DB_CONFIG.host}:${DB_CONFIG.port}`);
-    console.log(`  Database : ${DB_CONFIG.database}`);
-    console.log(`  User     : ${DB_CONFIG.user}`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    connection.release();
+  colovoPool.getConnection((err, connection) => {
+    if (err) {
+      console.error('❌ COLOVO DATABASE FAILED:', err.code, err.message);
+    } else {
+      console.log('✅ COLOVO DATABASE CONNECTED');
+      connection.release();
+    }
   });
 }
 
@@ -70,3 +65,5 @@ pool.on('error', (err) => {
 // Export both callback-style pool and promise-based pool
 module.exports = pool;
 module.exports.promise = pool.promise();
+module.exports.colovoPool = colovoPool;
+module.exports.colovoPromise = colovoPool.promise();

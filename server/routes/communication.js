@@ -98,11 +98,11 @@ router.post('/send', verifyToken, checkPermission('manage_communication'), async
     // 0. Fetch contact data for placeholders if possible
     let contactData = { name: '', email: recipient_email }; // Start empty to detect if found
     
-    const [leads] = await db.promise().query('SELECT name, email FROM leads WHERE email = ? LIMIT 1', [recipient_email]);
+    const [leads] = await db.promise.query('SELECT name, email FROM leads WHERE email = ? LIMIT 1', [recipient_email]);
     if (leads.length > 0) {
       contactData.name = leads[0].name;
     } else {
-      const [customers] = await db.promise().query('SELECT name, email FROM customers WHERE email = ? LIMIT 1', [recipient_email]);
+      const [customers] = await db.promise.query('SELECT name, email FROM customers WHERE email = ? LIMIT 1', [recipient_email]);
       if (customers.length > 0) contactData.name = customers[0].name;
     }
 
@@ -233,7 +233,7 @@ router.post('/call-initiate', verifyToken, checkPermission('manage_communication
 
   try {
     // 1. Get User's Phone
-    const [user] = await db.promise().query('SELECT phone FROM users WHERE id = ?', [userId]);
+    const [user] = await db.promise.query('SELECT phone FROM users WHERE id = ?', [userId]);
     if (!user || !user[0]?.phone) {
       return res.status(400).json({ success: false, message: 'Your phone number is not set in your profile.' });
     }
@@ -241,10 +241,10 @@ router.post('/call-initiate', verifyToken, checkPermission('manage_communication
     // 2. Get Contact's Phone
     let contactPhone;
     if (contact_type === 'Lead') {
-      const [lead] = await db.promise().query('SELECT phone FROM leads WHERE id = ?', [contact_id]);
+      const [lead] = await db.promise.query('SELECT phone FROM leads WHERE id = ?', [contact_id]);
       contactPhone = lead[0]?.phone;
     } else {
-      const [customer] = await db.promise().query('SELECT phone FROM customers WHERE id = ?', [contact_id]);
+      const [customer] = await db.promise.query('SELECT phone FROM customers WHERE id = ?', [contact_id]);
       contactPhone = customer[0]?.phone;
     }
 

@@ -5,6 +5,7 @@ const dotenv = require('dotenv');
 const path = require('path');
 
 dotenv.config({ path: path.join(__dirname, '.env') });
+require('./auto_migrate');
 
 const authRoutes = require('./routes/auth');
 const financeRoutes = require('./routes/finance');
@@ -23,7 +24,11 @@ const chatbotRoutes = require('./routes/chatbot');
 const db = require('./config/db');
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token', 'x-company-name']
+}));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
@@ -47,6 +52,7 @@ app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/tickets', require('./routes/tickets'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/policies', require('./routes/policies'));
+app.use('/api/workspace-sync', require('./routes/workspace_sync'));
 app.use('/api/backup', require('./routes/backup'));
 app.use('/api/roles', require('./routes/roles'));
 app.use('/api/dashboard', require('./routes/dashboard'));
@@ -58,15 +64,23 @@ app.use('/api/employee-stats', require('./routes/employeeStats'));
 app.use('/api/daily-reports', require('./routes/daily_reports'));
 app.use('/api/onboarding', require('./routes/onboarding'));
 app.use('/api/offboarding', require('./routes/offboarding'));
-app.use('/api/search', require('./routes/search'));
-app.use('/api/leads', require('./routes/leads'));
-app.use('/api/customers', require('./routes/customers'));
-app.use('/api/deals', require('./routes/deals'));
+app.use('/api/attendance', require('./routes/attendance'));
+app.use('/api/leaves', require('./routes/leaves'));
+app.use('/api/projects', require('./routes/projects'));
+app.use('/api/payroll', require('./routes/payroll'));
+app.use('/api/companies', require('./routes/companies'));
+
+// Temporary Migration Route
+app.use('/api/migration', require('./routes/migration'));
 app.use('/api/communication', require('./routes/communication'));
 app.use('/api/crm-dashboard', require('./routes/crmDashboard'));
 app.use('/api/crm-reports', require('./routes/crmReports'));
 app.use('/api/task-reports', require('./routes/taskReports'));
 app.use('/api/client-management', require('./routes/clientManagement'));
+app.use('/api/search', require('./routes/search'));
+app.use('/api/leads', require('./routes/leads'));
+app.use('/api/customers', require('./routes/customers'));
+app.use('/api/deals', require('./routes/deals'));
 app.use('/api/exams', require('./routes/exams'));
 app.use('/api/assets', require('./routes/assets'));
 app.use('/api/exam-schedules', require('./routes/exam-schedules'));
@@ -76,6 +90,7 @@ app.use('/api/face', require('./routes/face'));
 app.use('/api/wfh', require('./routes/wfh'));
 app.use('/api/attendance', require('./routes/attendance'));
 app.use('/api/leaves', require('./routes/leaves'));
+app.use('/api/workspace', require('./routes/workspaceProxy'));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Conflicting explicit string removed to allow React's dist/index.html to render on the root domain
@@ -116,11 +131,11 @@ setInterval(() => {
 }, 24 * 60 * 60 * 1000); // 24 hours
 
 // Serve Frontend in Production
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../client/dist')));
+if (process.env.NODE_ENV === 'production' || true) {
+  app.use(express.static(path.join(__dirname, 'public')));
 
   app.get(/^(.*)$/, (req, res) => {
-    res.sendFile(path.resolve(__dirname, '../client', 'dist', 'index.html'));
+    res.sendFile(path.resolve(__dirname, 'public', 'index.html'));
   });
 }
 

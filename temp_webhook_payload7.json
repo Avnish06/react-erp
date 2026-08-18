@@ -1,0 +1,39 @@
+{
+  "campaignId": "CMP001",
+  "campaignName": "Welcome Campaign",
+  "subject": "Welcome to Our Platform 🚀",
+  "sender": {
+    "name": "Vocallabs",
+    "email": "marketing@vocallabs.ai"
+  },
+  "template": {
+    "id": "TMP001",
+    "name": "Welcome Template"
+  },
+  "recipients": [
+    {
+      "leadId": "L001",
+      "firstName": "John",
+      "lastName": "Smith",
+      "email": "john.smith@example.com",
+      "company": "ABC Technologies",
+      "city": "Delhi"
+    },
+    {
+      "leadId": "L002",
+      "firstName": "Sarah",
+      "lastName": "Johnson",
+      "email": "sarah.johnson@example.com",
+      "company": "Growth Labs",
+      "city": "Mumbai"
+    },
+    {
+      "leadId": "L003",
+      "firstName": "Michael",
+      "lastName": "Brown",
+      "email": "michael.brown@example.com",
+      "company": "InnovateX",
+      "city": "Bengaluru"
+    }
+  ]
+}

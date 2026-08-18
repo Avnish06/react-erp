@@ -1,0 +1,67 @@
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+    <meta charset="utf-8">
+    <title>Colovo Workspace & HR - Project Report</title>
+</head>
+<body style="font-family: Arial, sans-serif;">
+    <h1 style="color: #2c3e50;">Colovo Workspace & HR - Project Report</h1>
+    <p>Based on the system's database architecture (Laravel) and the provided visual workflow, here is the comprehensive point-to-point report of the <b>Colovo Workspace</b> project.</p>
+
+    <hr>
+
+    <h2 style="color: #34495e;">1. WORKSPACE & DASHBOARD</h2>
+    <p>The core of the system is designed to provide a centralized hub for daily operations and reporting.</p>
+    <ul>
+        <li><b>Task Assignment:</b> Work and projects are dynamically assigned to employees directly from the ERP (Admin Panel). This is handled by the <i>tasks</i> and <i>projects</i> database tables.</li>
+        <li><b>Daily Employee Tracking:</b> Employees' daily activities are tracked through the <i>attendances</i> module where they Clock-In and Clock-Out, alongside real-time task status updates (<i>pending</i>, <i>in_progress</i>, <i>completed</i>).</li>
+        <li><b>Comprehensive Reporting:</b> The Workspace Dashboard generates multiple automated reports:
+            <ul>
+                <li><b>Project Reports:</b> Tracking project milestones.</li>
+                <li><b>Task Reports:</b> Monitoring individual task completion rates.</li>
+                <li><b>Employee Reports:</b> Overview of staff details and departments.</li>
+                <li><b>Attendance Reports:</b> Daily, weekly, and monthly attendance logs.</li>
+                <li><b>Performance Reports:</b> Aggregated data on employee efficiency.</li>
+            </ul>
+        </li>
+    </ul>
+
+    <hr>
+
+    <h2 style="color: #34495e;">2. FINANCIAL EVENING / YEAR</h2>
+    <p>The system integrates HR with company financials to measure the true cost and value of the workforce.</p>
+    <ul>
+        <li><b>Financial Tracking:</b> Tracks <b>Total Earning (Yearly)</b> and <b>Total Expenditure (Yearly)</b> through the <i>financial_records</i> and <i>payrolls</i> tables.</li>
+        <li><b>Employee vs. Department Performance:</b> It correlates the performance of individual employees and entire departments with the company's financial outcomes.</li>
+        <li><b>Annual Summary:</b> The system is capable of generating an <b>Annual Financial Summary & Performance Overview</b>, which gives management a clear picture of financial health at the end of the year.</li>
+    </ul>
+
+    <hr>
+
+    <h2 style="color: #34495e;">3. EMPLOYEE PERFORMANCE & GROWTH</h2>
+    <p>A structured pipeline to evaluate staff and ensure continuous company growth.</p>
+    <ul>
+        <li><b>Review & Evaluation:</b> Admin conducts regular performance reviews (recorded in the <i>performance_reviews</i> table).</li>
+        <li><b>Performance Analysis:</b> Employee performance is analyzed based on their task completion, attendance punctuality, and overall contribution.</li>
+        <li><b>Action Plans based on Analysis:</b>
+            <ul>
+                <li><b>High Performance:</b> Leads to the Growth / Promotion track.</li>
+                <li><b>Low Performance:</b> Triggers an Improvement Plan to help struggling employees get back on track.</li>
+            </ul>
+        </li>
+    </ul>
+
+    <hr>
+
+    <h2 style="color: #34495e;">4. EMPLOYEE PROMOTION & RECOGNITION</h2>
+    <p>Rewarding hard work to maintain a healthy and motivated workplace environment.</p>
+    <ul>
+        <li><b>Merit-Based Promotion:</b> Promotions are granted based on the documented performance metrics (managed via the <i>promotion_recognitions</i> table).</li>
+        <li><b>Salary Hike & Benefits:</b> High-performing employees receive salary increments and bonuses, which are updated in the <i>payrolls</i> and <i>users</i> (salary column) tables.</li>
+        <li><b>Recognition & Appreciation:</b> The system maintains a formal record of awards and appreciations given to the staff.</li>
+        <li><b>Employee Motivation & Retention:</b> By providing a transparent path to growth, the system ensures high employee morale, leading to better retention.</li>
+    </ul>
+
+    <br>
+    <p><i><b>Conclusion:</b> High performance leads to growth, recognition, and a stronger company. The <b>Colovo Workspace</b> system perfectly digitizes this complete lifecycle.</i></p>
+</body>
+</html>

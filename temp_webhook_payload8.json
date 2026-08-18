@@ -1,0 +1,23 @@
+{
+  "campaignId": "CMP001",
+  "campaignName": "Welcome Campaign",
+  "subject": "Welcome to Our Platform 🚀",
+  "sender": {
+    "name": "Vocallabs",
+    "email": "marketing@vocallabs.ai"
+  },
+  "recipients": [
+    {
+      "leadId": "L001",
+      "firstName": "John",
+      "email": "john@example.com",
+      "company": "ABC Technologies"
+    },
+    {
+      "leadId": "L002",
+      "firstName": "Sarah",
+      "email": "sarah@example.com",
+      "company": "Growth Labs"
+    }
+  ]
+}

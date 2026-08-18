@@ -39,7 +39,7 @@ router.post('/', (req, res) => {
   const settings = req.body;
   console.log('Received settings for update:', settings);
   const queries = Object.keys(settings).map(key => {
-    return db.promise().query(
+    return db.promise.query(
       'INSERT INTO system_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = ?',
       [key, settings[key], settings[key]]
     );
@@ -56,7 +56,8 @@ router.post('/upload-logo', upload.single('logo'), (req, res) => {
     return res.status(400).json({ success: false, message: 'No file uploaded' });
   }
 
-  const fileUrl = `http://localhost:5000/uploads/${req.file.filename}`;
+  const backendUrl = process.env.BACKEND_URL || 'http://localhost:5000';
+  const fileUrl = `${backendUrl}/uploads/${req.file.filename}`;
 
   // Save URL to database
   db.query(

@@ -2,6 +2,25 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
 const { verifyToken } = require('../middleware/auth');
+const { sendClientOnboardingEmail, sendProposalEmail } = require('../utils/mailer');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+// Configure Multer for PDF Uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = path.join(__dirname, '../uploads/proposals');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    cb(null, `proposal_${Date.now()}_${file.originalname}`);
+  }
+});
+const upload = multer({ storage });
 
 // @route   GET /api/client-management/proposals
 // @desc    Get all proposals
@@ -15,17 +34,51 @@ router.get('/proposals', verifyToken, (req, res) => {
 // @route   POST /api/client-management/proposals
 // @desc    Create a new proposal
 router.post('/proposals', verifyToken, (req, res) => {
-  const { client_name, project_name, value } = req.body;
+  const { client_name, client_email, project_name, value, details, terms } = req.body;
   const created_by = req.user.id;
   
   db.query(
-    'INSERT INTO proposals (client_name, project_name, value, created_by) VALUES (?, ?, ?, ?)',
-    [client_name, project_name, value, created_by],
+    'INSERT INTO proposals (client_name, client_email, project_name, value, details, terms, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    [client_name, client_email || null, project_name, value, details, terms, created_by],
     (err, result) => {
-      if (err) return res.status(500).json({ success: false, message: 'Database error' });
+      if (err) return res.status(500).json({ success: false, message: 'Database error', error: err.message });
       res.status(201).json({ success: true, message: 'Proposal created', id: result.insertId });
     }
   );
+});
+
+// @route   POST /api/client-management/proposals/:id/send-email
+// @desc    Upload PDF and send proposal to client via email
+router.post('/proposals/:id/send-email', verifyToken, upload.single('proposal_pdf'), (req, res) => {
+  const proposalId = req.params.id;
+  if (!req.file) {
+    return res.status(400).json({ success: false, message: 'No PDF file uploaded' });
+  }
+
+  const { client_name, client_email, project_name } = req.body;
+  
+  if (!client_email) {
+    return res.status(400).json({ success: false, message: 'Client email is required to send proposal' });
+  }
+
+  const pdfUrl = `/uploads/proposals/${req.file.filename}`;
+  const absolutePdfPath = req.file.path;
+
+  // Update proposal record with the saved PDF path
+  db.query('UPDATE proposals SET pdf_url = ? WHERE id = ?', [pdfUrl, proposalId], async (err) => {
+    if (err) {
+      console.error('Error updating proposal PDF URL:', err);
+      return res.status(500).json({ success: false, message: 'Database error' });
+    }
+
+    // Send Email
+    const emailResult = await sendProposalEmail(client_email, client_name, project_name, absolutePdfPath);
+    if (emailResult.success) {
+      res.json({ success: true, message: 'Proposal emailed to client successfully' });
+    } else {
+      res.status(500).json({ success: false, message: 'Failed to send email', error: emailResult.error });
+    }
+  });
 });
 
 // @route   PUT /api/client-management/proposals/:id/approve
@@ -75,11 +128,13 @@ router.post('/contracts', verifyToken, (req, res) => {
 router.post('/onboard', verifyToken, (req, res) => {
   const { lead_id, company_name, email, phone, contact_person, requirements } = req.body;
   const created_by = req.user.id;
+  const generatedPassword = `Pass${Math.floor(1000 + Math.random() * 9000)}!`;
+  const name = contact_person || company_name;
   
   db.query(
-    'INSERT INTO customers (name, company_name, email, phone, requirements, assigned_to, stage, health_score, portal_access_enabled) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    [contact_person || company_name, company_name, email, phone, requirements, created_by, 'Won', 100, true],
-    (err, result) => {
+    'INSERT INTO customers (name, company_name, email, phone, requirements, assigned_to, stage, health_score, portal_access_enabled, password) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    [name, company_name, email, phone, requirements, created_by, 'Won', 100, true, generatedPassword],
+    async (err, result) => {
       if (err) return res.status(500).json({ success: false, message: 'Database error', error: err.message });
       
       // Update lead status if lead_id was provided
@@ -87,10 +142,16 @@ router.post('/onboard', verifyToken, (req, res) => {
         db.query("UPDATE leads SET status = 'Won' WHERE id = ?", [lead_id]);
       }
       
+      // Send onboarding email asynchronously
+      if (email) {
+        sendClientOnboardingEmail(email, name, generatedPassword);
+      }
+      
       res.status(201).json({ success: true, message: 'Client onboarded successfully', id: result.insertId });
     }
   );
 });
+
 
 // @route   PUT /api/client-management/contracts/:id/sign
 // @desc    Client or Admin signs a contract

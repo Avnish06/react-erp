@@ -1,6 +1,102 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
+const { verifyToken } = require('../middleware/auth');
+
+// Helper function to send notification for Project Assignment
+async function sendProjectAssignmentNotification(assigned_to, projectName, triggeredBy, companyName) {
+  if (!assigned_to) return;
+  try {
+    const title = 'New Project Assigned';
+    const message = `You have been assigned to the project: "${projectName}"`;
+    const type = 'project';
+    const action_type = 'PROJECT_ASSIGNMENT';
+
+    // 1. Save in ERP notifications table
+    await db.promise.query(
+      'INSERT INTO notifications (user_id, title, message, type, triggered_by, action_type, company_name) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [assigned_to, title, message, type, triggeredBy || null, action_type, companyName || 'Hatbaliya']
+    );
+
+    // 2. Fetch user's email in ERP
+    const [userRows] = await db.promise.query('SELECT email FROM user_identities WHERE id = ?', [assigned_to]);
+    if (userRows.length > 0) {
+      const email = userRows[0].email;
+      const { colovoPromise } = require('../config/db');
+      const crypto = require('crypto');
+
+      // 3. Find user in Colovo Database
+      const [colovoUsers] = await colovoPromise.query('SELECT id FROM users WHERE email = ?', [email]);
+      if (colovoUsers.length > 0) {
+        const colovoUserId = colovoUsers[0].id;
+        const notifId = crypto.randomUUID();
+        const dataJson = JSON.stringify({
+          title: title,
+          message: message,
+          type: type,
+          project_name: projectName
+        });
+
+        // 4. Insert into Colovo notifications table
+        await colovoPromise.execute(
+          'INSERT INTO notifications (id, type, notifiable_type, notifiable_id, data, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NOW(), NOW())',
+          [notifId, 'App\\Notifications\\GeneralNotification', 'App\\Models\\User', colovoUserId, dataJson]
+        );
+        console.log('[Workspace Sync] Project notification synced to Colovo user ID:', colovoUserId);
+      }
+    }
+  } catch (err) {
+    console.error('[Notification Sync Error] Failed to process project notification:', err.message);
+  }
+}
+
+// Helper function to send notification for Task Assignment
+async function sendTaskAssignmentNotification(assigned_to, taskTitle, projectName, triggeredBy, companyName) {
+  if (!assigned_to) return;
+  try {
+    const title = 'New Task Assigned';
+    const message = `You have been assigned to the task: "${taskTitle}" under project: "${projectName}"`;
+    const type = 'task';
+    const action_type = 'TASK_ASSIGNMENT';
+
+    // 1. Save in ERP notifications table
+    await db.promise.query(
+      'INSERT INTO notifications (user_id, title, message, type, triggered_by, action_type, company_name) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [assigned_to, title, message, type, triggeredBy || null, action_type, companyName || 'Hatbaliya']
+    );
+
+    // 2. Fetch user's email in ERP
+    const [userRows] = await db.promise.query('SELECT email FROM user_identities WHERE id = ?', [assigned_to]);
+    if (userRows.length > 0) {
+      const email = userRows[0].email;
+      const { colovoPromise } = require('../config/db');
+      const crypto = require('crypto');
+
+      // 3. Find user in Colovo Database
+      const [colovoUsers] = await colovoPromise.query('SELECT id FROM users WHERE email = ?', [email]);
+      if (colovoUsers.length > 0) {
+        const colovoUserId = colovoUsers[0].id;
+        const notifId = crypto.randomUUID();
+        const dataJson = JSON.stringify({
+          title: title,
+          message: message,
+          type: type,
+          task_title: taskTitle,
+          project_name: projectName
+        });
+
+        // 4. Insert into Colovo notifications table
+        await colovoPromise.execute(
+          'INSERT INTO notifications (id, type, notifiable_type, notifiable_id, data, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NOW(), NOW())',
+          [notifId, 'App\\Notifications\\GeneralNotification', 'App\\Models\\User', colovoUserId, dataJson]
+        );
+        console.log('[Workspace Sync] Task notification synced to Colovo user ID:', colovoUserId);
+      }
+    }
+  } catch (err) {
+    console.error('[Notification Sync Error] Failed to process task notification:', err.message);
+  }
+}
 
 // Add created_at column to tasks if it doesn't exist
 db.query(`ALTER TABLE tasks ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP`, (err) => {
@@ -14,16 +110,64 @@ db.query(`ALTER TABLE tasks ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAUL
   }
 });
 
-// Get all projects
-router.get('/', (req, res) => {
-  console.log('GET /api/projects hit');
-  db.query('SELECT * FROM projects ORDER BY created_at DESC', (err, results) => {
-    if (err) {
-      console.error('Error in GET /api/projects:', err);
-      return res.status(500).json({ success: false, message: 'Error fetching projects' });
+// Get all projects for dropdown (Auto-syncs live projects from Colovo Workspace)
+router.get('/', async (req, res) => {
+  try {
+    const colovoDb = require('../config/db').colovoPromise;
+    
+    // 1. Fetch live projects from Colovo Workspace
+    const [colovoProjects] = await colovoDb.query('SELECT title, description FROM projects');
+    
+    // 2. Fetch ERP projects
+    const [erpProjects] = await db.promise.query('SELECT id, name, description FROM projects ORDER BY created_at DESC');
+    
+    const erpProjectMap = new Map(erpProjects.map(p => [p.name, p]));
+    const results = [];
+    
+    // 3. Auto-sync missing Colovo projects into ERP
+    for (const cp of colovoProjects) {
+      const erpRecord = erpProjectMap.get(cp.title);
+      if (erpRecord) {
+        results.push({
+          id: erpRecord.id,
+          name: `${cp.title} (Colovo Workspace)`,
+          description: erpRecord.description
+        });
+        erpProjectMap.delete(cp.title); // prevent duplicates
+      } else {
+        // Auto-sync into ERP
+        try {
+          const [insertRes] = await db.promise.query(
+            'INSERT INTO projects (name, description, status, company_name) VALUES (?, ?, ?, ?)',
+            [cp.title, cp.description, 'Ongoing', 'Colovo Workspace']
+          );
+          results.push({
+            id: insertRes.insertId,
+            name: `${cp.title} (Colovo Workspace)`,
+            description: cp.description
+          });
+        } catch(syncErr) {
+          console.error('Failed to auto-sync Colovo project:', cp.title, syncErr);
+        }
+      }
     }
+    
+    // 4. Add the remaining ERP projects
+    for (const [name, erpRecord] of erpProjectMap.entries()) {
+      results.push({
+        id: erpRecord.id,
+        name: erpRecord.name,
+        description: erpRecord.description
+      });
+    }
+
+    results.sort((a, b) => a.name.localeCompare(b.name));
     res.json({ success: true, data: results });
-  });
+
+  } catch (err) {
+    console.error('Error fetching Colovo projects:', err);
+    res.status(500).json({ success: false, message: 'Error fetching projects' });
+  }
 });
 
 // Get unified list: projects + tasks as one flat table
@@ -80,16 +224,50 @@ router.get('/all', (req, res) => {
   });
 });
 
-
-
-
-// Create new project
-router.post('/', (req, res) => {
+// Create new project and sync to Colovo Workspace
+router.post('/', verifyToken, async (req, res) => {
   const { name, description, deadline, assigned_to } = req.body;
-  db.query('INSERT INTO projects (name, description, deadline, assigned_to) VALUES (?, ?, ?, ?)', [name, description, deadline, assigned_to || null], (err, result) => {
-    if (err) return res.status(500).json({ success: false, message: 'Error creating project' });
-    res.json({ success: true, message: 'Project created', id: result.insertId });
-  });
+  try {
+    // 1. Create in ERP
+    const [result] = await db.promise.query(
+      'INSERT INTO projects (name, description, deadline, assigned_to) VALUES (?, ?, ?, ?)', 
+      [name, description, deadline, assigned_to || null]
+    );
+
+    // 2. Send Project Assignment Notification
+    if (assigned_to) {
+      await sendProjectAssignmentNotification(assigned_to, name, req.user ? req.user.id : null, req.company_name);
+    }
+
+    // 3. Auto-sync to Colovo Workspace via API
+    try {
+      const axios = require('axios');
+      let assigned_email = null;
+      
+      if (assigned_to) {
+        // Find user email in ERP to send to Colovo API
+        const [erpUser] = await db.promise.query('SELECT email FROM user_identities WHERE id = ?', [assigned_to]);
+        if (erpUser.length > 0) {
+          assigned_email = erpUser[0].email;
+        }
+      }
+
+      await axios.post('http://127.0.0.1:8000/api/sync-project', {
+        title: name,
+        description: description,
+        assigned_email: assigned_email
+      }, {
+        headers: { 'X-ERP-SECRET': process.env.ERP_SHARED_SECRET || 'default-erp-secret-12345' }
+      });
+    } catch (syncErr) {
+      console.error('Failed to sync new ERP project to Colovo API:', syncErr.message);
+    }
+
+    res.json({ success: true, message: 'Project created and synced to Colovo', id: result.insertId });
+  } catch (err) {
+    console.error('Error creating project:', err);
+    res.status(500).json({ success: false, message: 'Error creating project' });
+  }
 });
 
 // Get tasks for a project or user
@@ -113,30 +291,98 @@ router.get('/tasks', (req, res) => {
   });
 });
 
-// Create task
-router.post('/tasks', (req, res) => {
+// Create task and sync to Colovo Workspace
+router.post('/tasks', verifyToken, async (req, res) => {
   const { project_id, assigned_to, title, description, deadline } = req.body;
-  const query = 'INSERT INTO tasks (project_id, assigned_to, title, description, deadline) VALUES (?, ?, ?, ?, ?)';
-  db.query(query, [project_id, assigned_to, title, description, deadline], (err, result) => {
-    if (err) return res.status(500).json({ success: false, message: 'Error creating task' });
-    res.json({ success: true, message: 'Task assigned', id: result.insertId });
-  });
+  try {
+    // 1. Insert into ERP
+    const [result] = await db.promise.query(
+      'INSERT INTO tasks (project_id, assigned_to, title, description, deadline) VALUES (?, ?, ?, ?, ?)',
+      [project_id, assigned_to, title, description, deadline]
+    );
+
+    // Get Project Title
+    let project_title = '';
+    const [erpProj] = await db.promise.query('SELECT name FROM projects WHERE id = ?', [project_id]);
+    if (erpProj.length > 0) {
+      project_title = erpProj[0].name.replace(' (Colovo Workspace)', '');
+    }
+
+    // 2. Send Task Assignment Notification
+    if (assigned_to) {
+      await sendTaskAssignmentNotification(assigned_to, title, project_title, req.user ? req.user.id : null, req.company_name);
+    }
+
+    // 3. Auto-sync to Colovo Workspace via API
+    try {
+      const axios = require('axios');
+      let assigned_email = null;
+      
+      // Get Assigned Email
+      if (assigned_to) {
+        const [erpUser] = await db.promise.query('SELECT email FROM user_identities WHERE id = ?', [assigned_to]);
+        if (erpUser.length > 0) {
+          assigned_email = erpUser[0].email;
+        }
+      }
+
+      if (project_title && assigned_email) {
+        await axios.post('http://127.0.0.1:8000/api/sync-task', {
+          project_title: project_title,
+          assigned_email: assigned_email,
+          title: title,
+          description: description,
+          due_date: deadline
+        }, {
+          headers: { 'X-ERP-SECRET': process.env.ERP_SHARED_SECRET || 'default-erp-secret-12345' }
+        });
+      }
+    } catch (syncErr) {
+      console.error('Task sync error to Colovo API:', syncErr.message);
+    }
+    
+    res.json({ success: true, message: 'Task assigned and synced', id: result.insertId });
+  } catch (err) {
+    console.error('Error creating task:', err);
+    res.status(500).json({ success: false, message: 'Error creating task: ' + err.message });
+  }
 });
 
 // Update task
 // NOTE: Must be defined BEFORE PUT /:id to avoid 'tasks' being matched as :id
-router.put('/tasks/:id', (req, res) => {
+router.put('/tasks/:id', verifyToken, async (req, res) => {
   const { title, description, deadline, status, assigned_to } = req.body;
-  const query = 'UPDATE tasks SET title=?, description=?, deadline=?, status=?, assigned_to=? WHERE id=?';
-  db.query(query, [title, description, deadline, status, assigned_to, req.params.id], (err, result) => {
-    if (err) return res.status(500).json({ success: false, message: 'Error updating task' });
+  try {
+    // Check if assignment has changed
+    const [existing] = await db.promise.query('SELECT title, project_id, assigned_to FROM tasks WHERE id = ?', [req.params.id]);
+    const existingAssignee = existing.length > 0 ? existing[0].assigned_to : null;
+    const taskTitle = title || (existing.length > 0 ? existing[0].title : '');
+    const projectId = existing.length > 0 ? existing[0].project_id : null;
+
+    const query = 'UPDATE tasks SET title=?, description=?, deadline=?, status=?, assigned_to=? WHERE id=?';
+    await db.promise.query(query, [title, description, deadline, status, assigned_to || null, req.params.id]);
+
+    if (assigned_to && String(assigned_to) !== String(existingAssignee)) {
+      let project_title = '';
+      if (projectId) {
+        const [erpProj] = await db.promise.query('SELECT name FROM projects WHERE id = ?', [projectId]);
+        if (erpProj.length > 0) {
+          project_title = erpProj[0].name.replace(' (Colovo Workspace)', '');
+        }
+      }
+      await sendTaskAssignmentNotification(assigned_to, taskTitle, project_title, req.user ? req.user.id : null, req.company_name);
+    }
+
     res.json({ success: true, message: 'Task updated' });
-  });
+  } catch (err) {
+    console.error('Error updating task:', err);
+    res.status(500).json({ success: false, message: 'Error updating task' });
+  }
 });
 
 // Delete task
 // NOTE: Must be defined BEFORE DELETE /:id to avoid 'tasks' being matched as :id
-router.delete('/tasks/:id', (req, res) => {
+router.delete('/tasks/:id', verifyToken, (req, res) => {
   db.query('DELETE FROM tasks WHERE id = ?', [req.params.id], (err, result) => {
     if (err) return res.status(500).json({ success: false, message: 'Error deleting task' });
     res.json({ success: true, message: 'Task deleted' });
@@ -144,17 +390,30 @@ router.delete('/tasks/:id', (req, res) => {
 });
 
 // Update project
-router.put('/:id', (req, res) => {
+router.put('/:id', verifyToken, async (req, res) => {
   const { name, description, deadline, status, assigned_to } = req.body;
-  const query = 'UPDATE projects SET name=?, description=?, deadline=?, status=?, assigned_to=? WHERE id=?';
-  db.query(query, [name, description, deadline, status, assigned_to || null, req.params.id], (err, result) => {
-    if (err) return res.status(500).json({ success: false, message: 'Error updating project' });
+  try {
+    // Check if assignment has changed
+    const [existing] = await db.promise.query('SELECT name, assigned_to FROM projects WHERE id = ?', [req.params.id]);
+    const existingAssignee = existing.length > 0 ? existing[0].assigned_to : null;
+    const projectName = name || (existing.length > 0 ? existing[0].name : '');
+
+    const query = 'UPDATE projects SET name=?, description=?, deadline=?, status=?, assigned_to=? WHERE id=?';
+    await db.promise.query(query, [name, description, deadline, status, assigned_to || null, req.params.id]);
+
+    if (assigned_to && String(assigned_to) !== String(existingAssignee)) {
+      await sendProjectAssignmentNotification(assigned_to, projectName, req.user ? req.user.id : null, req.company_name);
+    }
+
     res.json({ success: true, message: 'Project updated' });
-  });
+  } catch (err) {
+    console.error('Error updating project:', err);
+    res.status(500).json({ success: false, message: 'Error updating project' });
+  }
 });
 
 // Delete project
-router.delete('/:id', (req, res) => {
+router.delete('/:id', verifyToken, (req, res) => {
   db.query('DELETE FROM projects WHERE id = ?', [req.params.id], (err, result) => {
     if (err) return res.status(500).json({ success: false, message: 'Error deleting project' });
     res.json({ success: true, message: 'Project deleted' });

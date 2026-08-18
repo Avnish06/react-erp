@@ -1,7 +1,7 @@
 const nodemailer = require('nodemailer');
 const path = require('path');
 
-const sendUniqueIdEmail = async (email, name, uniqueId) => {
+const sendUniqueIdEmail = async (email, name, uniqueId, password) => {
   try {
     // Basic SMTP transport configuration
     // User must fill these in .env
@@ -26,11 +26,14 @@ const sendUniqueIdEmail = async (email, name, uniqueId) => {
             Thank you for registering. Your application has been received and is currently pending administrator approval.
           </p>
           <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; text-align: center; margin: 25px 0;">
-            <p style="font-size: 12px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 5px;">Your Unique ID</p>
+            <p style="font-size: 12px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 5px;">Your Unique ID (Username)</p>
             <p style="font-size: 32px; font-weight: 800; color: #4f46e5; margin: 0; letter-spacing: -0.02em;">${uniqueId}</p>
+            <br/>
+            <p style="font-size: 12px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 5px;">Your Password</p>
+            <p style="font-size: 24px; font-weight: 800; color: #e54646; margin: 0; letter-spacing: -0.02em;">${password}</p>
           </div>
           <p style="color: #999; font-size: 13px; text-align: center;">
-            Please keep this ID safe. You will need it to log in once your account is approved.
+            Please keep these credentials safe. You can use them to log in to the ERP and Colovo Workspace.
           </p>
           <hr style="border: none; border-top: 1px solid #eee; margin: 25px 0;" />
           <p style="color: #ccc; font-size: 11px; text-align: center;">
@@ -61,7 +64,8 @@ const sendResetPasswordEmail = async (email, name, token) => {
       },
     });
 
-    const resetUrl = `http://localhost:5173/reset-password/${token}`;
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const resetUrl = `${frontendUrl}/reset-password/${token}`;
 
     const mailOptions = {
       from: `"Management System" <${process.env.SMTP_USER || 'noreply@example.com'}>`,
@@ -122,4 +126,148 @@ const sendResetPasswordEmail = async (email, name, token) => {
   }
 };
 
-module.exports = { sendUniqueIdEmail, sendResetPasswordEmail };
+const sendInvoiceEmail = async (email, name, invoiceId, amount, pdfPath) => {
+  try {
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || 'smtp.ethereal.email',
+      port: process.env.SMTP_PORT || 587,
+      secure: false,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+
+    const mailOptions = {
+      from: `"Management System" <${process.env.SMTP_USER || 'noreply@example.com'}>`,
+      to: email,
+      subject: `Invoice ${invoiceId} from ERPMaster IT Solutions`,
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+          <h2 style="color: #4f46e5; text-align: center;">Hello, ${name}!</h2>
+          <p style="color: #666; line-height: 1.6; text-align: center;">
+            Please find attached your invoice <strong>${invoiceId}</strong> for the amount of <strong>₹${amount}</strong>.
+          </p>
+          <div style="text-align: center; margin: 25px 0;">
+            <p style="color: #999; font-size: 13px;">
+              If you have any questions about this invoice, simply reply to this email. We appreciate your business!
+            </p>
+          </div>
+          <hr style="border: none; border-top: 1px solid #eee; margin: 25px 0;" />
+          <p style="color: #ccc; font-size: 11px; text-align: center;">
+            ERPMaster IT Solutions
+          </p>
+        </div>
+      `,
+      attachments: [{
+        filename: `Invoice_${invoiceId}.pdf`,
+        path: pdfPath
+      }]
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log('[Mailer] Invoice email sent:', info.messageId);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('[Mailer] Invoice email error:', error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+const sendClientOnboardingEmail = async (email, name, password) => {
+  try {
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || 'smtp.ethereal.email',
+      port: process.env.SMTP_PORT || 587,
+      secure: false,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+
+    const mailOptions = {
+      from: `"Management System" <${process.env.SMTP_USER || 'noreply@example.com'}>`,
+      to: email,
+      subject: 'Welcome to ERPMaster IT Solutions!',
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+          <h2 style="color: #4f46e5; text-align: center;">Welcome aboard, ${name}!</h2>
+          <p style="color: #666; line-height: 1.6;">
+            We are thrilled to officially welcome you as a client. Your account has been successfully set up and you can now access our Client Portal to manage your projects, invoices, and proposals.
+          </p>
+          <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; text-align: center; margin: 25px 0;">
+            <p style="font-size: 12px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 5px;">Your Portal Login Details</p>
+            <p style="font-size: 14px; color: #4f46e5; margin: 5px 0;"><strong>Email:</strong> ${email}</p>
+            <p style="font-size: 14px; color: #e54646; margin: 5px 0;"><strong>Password:</strong> ${password}</p>
+          </div>
+          <div style="text-align: center; margin: 25px 0;">
+            <a href="${frontendUrl}/login" style="background-color: #4f46e5; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">Login to Client Portal</a>
+          </div>
+          <p style="color: #999; font-size: 13px; text-align: center;">
+            We highly recommend changing your password after your first login.
+          </p>
+        </div>
+      `
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log('[Mailer] Onboarding email sent:', info.messageId);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('[Mailer] Onboarding email error:', error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+const sendProposalEmail = async (email, clientName, projectName, pdfPath) => {
+  try {
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || 'smtp.ethereal.email',
+      port: process.env.SMTP_PORT || 587,
+      secure: false,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+
+    const mailOptions = {
+      from: `"Management System" <${process.env.SMTP_USER || 'noreply@example.com'}>`,
+      to: email,
+      subject: `Project Proposal: ${projectName}`,
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+          <h2 style="color: #4f46e5; text-align: center;">Hello, ${clientName}!</h2>
+          <p style="color: #666; line-height: 1.6; text-align: center;">
+            Please find attached our detailed proposal for the <strong>${projectName}</strong> project.
+          </p>
+          <div style="text-align: center; margin: 25px 0;">
+            <p style="color: #999; font-size: 13px;">
+              We have outlined the scope of work, investment, and terms in the attached PDF. Let us know if you have any questions or would like to discuss this further.
+            </p>
+          </div>
+          <hr style="border: none; border-top: 1px solid #eee; margin: 25px 0;" />
+          <p style="color: #ccc; font-size: 11px; text-align: center;">
+            ERPMaster IT Solutions
+          </p>
+        </div>
+      `,
+      attachments: [{
+        filename: `Proposal_${projectName}.pdf`,
+        path: pdfPath
+      }]
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log('[Mailer] Proposal email sent:', info.messageId);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('[Mailer] Proposal email error:', error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+module.exports = { sendUniqueIdEmail, sendResetPasswordEmail, sendInvoiceEmail, sendClientOnboardingEmail, sendProposalEmail };

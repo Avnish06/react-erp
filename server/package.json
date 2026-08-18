@@ -5,7 +5,7 @@
   "scripts": {
     "start": "node index.js",
     "start:prod": "cross-env NODE_ENV=production node index.js",
-    "build:prod": "npm install --prefix ../client && npm run build --prefix ../client",
+    "build:prod": "echo 'Build already completed locally. Skipping Hostinger build.'",
     "dev": "nodemon index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

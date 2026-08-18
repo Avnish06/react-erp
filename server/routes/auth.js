@@ -20,6 +20,7 @@ router.post('/login', async (req, res) => {
         SELECT users.*, roles.name as role
         FROM users 
         JOIN roles ON users.role_id = roles.id
+        LEFT JOIN employees e ON users.id = e.user_id
         WHERE users.email = ?
     `;
 
@@ -105,7 +106,7 @@ router.post('/login', async (req, res) => {
 
     // Fetch security settings for dynamic session timeout
     const securitySettings = await getSecuritySettings();
-    const expiresIn = `${securitySettings.session_timeout}m`;
+    const expiresIn = '7d';
 
     // Fetch permissions
     const permQuery = `
@@ -143,6 +144,7 @@ router.post('/login', async (req, res) => {
               name: user.name,
               email: user.email,
               role: user.role,
+              company_name: user.company_name,
               permissions
             }
           });
@@ -164,6 +166,7 @@ router.post('/login', async (req, res) => {
             email: user.email,
             role: user.role,
             profile_image: user.profile_image || null,
+            company_name: user.company_name,
             permissions
           }
         });
@@ -177,9 +180,10 @@ router.get('/me', verifyToken, (req, res) => {
   const userId = req.user.id;
   
   db.query(`
-    SELECT users.id, users.employee_id, users.role_id, users.name, users.email, roles.name as role, users.profile_image 
+    SELECT users.id, users.employee_id, users.role_id, users.name, users.email, roles.name as role, e.company_name 
     FROM users 
     JOIN roles ON users.role_id = roles.id 
+    LEFT JOIN employees e ON users.id = e.user_id
     WHERE users.id = ?
   `, [userId], (err, users) => {
     if (err) {

@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    @apply antialiased text-blue-950 bg-gradient-to-br from-orange-200 via-orange-50 to-gray-100 min-h-screen;
+  }
+
+  #root {
+    @apply h-full;
+  }
+}
+
+/* Hide browser default password reveal and clear buttons */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  width: max-content;
+  display: flex;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  animation: marquee 40s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
