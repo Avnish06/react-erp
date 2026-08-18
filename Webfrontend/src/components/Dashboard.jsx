@@ -1869,6 +1869,7 @@ function Header({ user, unreadCount, toggleSidebar, menuItems, onNavigate, onNav
               src={companiesList[selectedCompany]?.logo}
               alt="Current Logo"
               className="w-7 h-7 object-contain rounded-md border border-gray-100 p-0.5 bg-slate-50"
+              onError={(e) => { e.target.onerror = null; e.target.src = '/image.png'; }}
             />
             <div className="relative">
               <button
@@ -1906,7 +1907,12 @@ function Header({ user, unreadCount, toggleSidebar, menuItems, onNavigate, onNav
                           className={`w-full flex items-center gap-3 px-4 py-3 text-left text-xs font-bold transition-colors ${selectedCompany === companyKey ? 'text-orange-600 bg-orange-50' : 'text-slate-600 hover:bg-gray-50'}`}
                         >
                           <div className="w-8 h-8 rounded-full bg-white border border-gray-100 shadow-sm flex items-center justify-center p-1 shrink-0">
-                            <img src={companiesList[companyKey].logo} className="w-full h-full object-contain" alt="logo" />
+                            <img 
+                              src={companiesList[companyKey].logo} 
+                              className="w-full h-full object-contain" 
+                              alt="logo" 
+                              onError={(e) => { e.target.onerror = null; e.target.src = '/image.png'; }}
+                            />
                           </div>
                           <span className="truncate">{companiesList[companyKey].name}</span>
                         </button>
