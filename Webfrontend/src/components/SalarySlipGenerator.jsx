@@ -170,7 +170,8 @@ export default function SalarySlipGenerator({ payroll = null, onClose }) {
         </div>
 
         {/* Print Content Area */}
-        <div id="salary-slip-content" className="bg-white p-8 md:p-10 font-sans text-blue-900 text-[11px] leading-relaxed relative" style={{ width: '794px', minHeight: '1123px', margin: '0 auto' }}>
+        <div className="flex-1 overflow-y-auto w-full">
+          <div id="salary-slip-content" className="bg-white p-8 md:p-10 font-sans text-blue-900 text-[11px] leading-relaxed relative" style={{ width: '794px', minHeight: '1123px', margin: '0 auto' }}>
           
           {/* Top Banner Accent */}
           <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-blue-700 to-indigo-900" />
@@ -178,8 +179,8 @@ export default function SalarySlipGenerator({ payroll = null, onClose }) {
           {/* Header */}
           <div className="flex justify-between items-start border-b border-gray-100 pb-6 mb-6">
             <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="w-8 h-8 rounded-lg bg-orange-900 text-white flex items-center justify-center font-black text-sm">H</span>
+              <div className="flex items-center gap-3">
+                <img src="/image.png" alt="Company Logo" className="h-10 object-contain" />
                 <span className="text-xl font-black tracking-tight text-orange-950">HATBALIYA <span className="text-orange-600 font-bold">TECHNOLOGIES</span></span>
               </div>
               <p className="text-[10px] text-gray-400 font-semibold italic -mt-1">{slip.tagline}</p>
@@ -396,6 +397,7 @@ export default function SalarySlipGenerator({ payroll = null, onClose }) {
             <span>✉️ info@hatbaliyatechnologies.com</span>
             <span>🌐 www.hatbaliyatechnologies.com</span>
           </div>
+        </div>
         </div>
 
       </div>
