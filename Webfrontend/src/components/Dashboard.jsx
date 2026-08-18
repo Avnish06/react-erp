@@ -186,8 +186,12 @@ const Dashboard = () => {
           if (comp.logo) {
             let processedLogo = comp.logo;
             if (processedLogo.startsWith('company_logos/')) {
-              processedLogo = `http://localhost:8000/storage/${processedLogo}`;
-            } else if (processedLogo.includes('localhost:5000') && window.location.hostname !== 'localhost') {
+              processedLogo = `https://hrms.colvo.co.in/storage/${processedLogo}`;
+            }
+            if (processedLogo.includes('localhost:8000') && window.location.hostname !== 'localhost') {
+              processedLogo = processedLogo.replace('http://localhost:8000', 'https://hrms.colvo.co.in');
+            }
+            if (processedLogo.includes('localhost:5000') && window.location.hostname !== 'localhost') {
               processedLogo = processedLogo.replace('http://localhost:5000', window.location.origin);
             }
             cLogo = processedLogo;
