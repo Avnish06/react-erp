@@ -121,18 +121,20 @@ export default function SalarySlipGenerator({ payroll = null, onClose }) {
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
-        allowTaint: true,
+        logging: false,
+        scrollX: 0,
+        scrollY: 0
       });
-      const imgData = canvas.toDataURL('image/png');
+      const imgData = canvas.toDataURL('image/png', 1.0);
       const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgWidth = 210; // A4 size width in mm
-      const pageHeight = 295; // A4 size height in mm
+      const imgWidth = 210;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       
       pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
       pdf.save(`Salary_Slip_${slip.employeeName.replace(/\s+/g, '_')}_${slip.monthYear}.pdf`);
       toast.success('Salary Slip PDF Downloaded!');
     } catch (e) {
+      console.error("PDF Generation Error:", e);
       toast.error('Failed to generate PDF download.');
     }
   };
