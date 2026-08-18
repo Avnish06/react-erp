@@ -34,7 +34,7 @@ const InvoiceManagement = ({ initialTab = 'history' }) => {
     }
   };
 
-  const subtotal = items.reduce((acc, item) => acc + (item.qty * item.rate), 0);
+  const subtotal = items.reduce((acc, item) => acc + ((parseFloat(item.qty) || 0) * (parseFloat(item.rate) || 0)), 0);
   const tax = subtotal * 0.18;
   const total = subtotal + tax;
 
@@ -50,7 +50,7 @@ const InvoiceManagement = ({ initialTab = 'history' }) => {
 
   const handleItemChange = (index, field, value) => {
     const newItems = [...items];
-    newItems[index][field] = field === 'description' ? value : Number(value);
+    newItems[index][field] = value;
     setItems(newItems);
   };
 
@@ -77,12 +77,16 @@ const InvoiceManagement = ({ initialTab = 'history' }) => {
     autoTable(doc, {
       startY: 70,
       head: [['Description', 'Qty', 'Rate', 'Amount']],
-      body: items.map(item => [
-        item.description,
-        item.qty,
-        `₹${item.rate.toFixed(2)}`,
-        `₹${(item.qty * item.rate).toFixed(2)}`
-      ]),
+      body: items.map(item => {
+        const q = parseFloat(item.qty) || 0;
+        const r = parseFloat(item.rate) || 0;
+        return [
+          item.description,
+          q,
+          `₹${r.toFixed(2)}`,
+          `₹${(q * r).toFixed(2)}`
+        ];
+      }),
       theme: 'striped',
       headStyles: { fillColor: [30, 58, 138] }
     });
@@ -231,7 +235,7 @@ const InvoiceManagement = ({ initialTab = 'history' }) => {
                 <tr>
                   <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Description</th>
                   <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Quantity</th>
-                  <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Rate</th>
+                  <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Rate / Price</th>
                   <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Amount</th>
                 </tr>
               </thead>
@@ -264,7 +268,7 @@ const InvoiceManagement = ({ initialTab = 'history' }) => {
                       />
                     </td>
                     <td className="px-6 py-4 text-sm font-bold text-blue-950 flex items-center justify-between">
-                      {`₹${(item.qty * item.rate).toFixed(2)}`}
+                      {`₹${((parseFloat(item.qty) || 0) * (parseFloat(item.rate) || 0)).toFixed(2)}`}
                       <button
                         onClick={() => handleRemoveItem(index)}
                         className="text-gray-300 hover:text-red-500 transition-colors"
