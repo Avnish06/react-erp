@@ -1281,7 +1281,6 @@ const Dashboard = () => {
             {(activeTab === 'Tickets' || activeTab === 'Support_Respond' || activeTab === 'Support_Queries') && <Support initialTab={activeTab} />}
             {(activeTab === 'Documentation') && <EmployeeDocuments />}
             {(activeTab === 'DocVerification' || activeTab === 'DocVerification_Employee') && <EmployeeDocumentManager />}
-            {(activeTab === 'Announcements') && <Announcements />}
             {(activeTab === 'ViewProfile' || activeTab === 'EditProfile' || activeTab === 'AccountControl' || activeTab === 'EditProfileAccount' || activeTab === 'ChangePassword') && <AccountControl />}
             {(activeTab === 'ViewPolicies') && <AdminSettings initialTab="Policies" />}
             {(activeTab === 'NotificationCenter') && (
