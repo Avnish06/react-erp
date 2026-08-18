@@ -634,7 +634,6 @@ const Dashboard = () => {
           hasPermission('manage_users') && role === 'Super Admin' && { label: 'Manage Companies', id: 'ManageCompanies_Employee', icon: <Building2 size={16} /> },
           hasPermission('manage_users') && { label: 'Add Employee', id: 'AddEmployee', icon: <Plus size={16} /> },
           hasPermission('manage_users') && { label: 'Edit Employee', id: 'EditEmployee', icon: <Edit size={16} /> },
-          hasPermission('manage_users') && { label: 'Remove Employee', id: 'RemoveEmployee', icon: <Trash2 size={16} /> },
           hasPermission('view_employees') && { label: 'View All Employees', id: 'ViewEmployees', icon: <Users size={16} /> },
           hasPermission('manage_users') && { label: 'Registration Approvals', id: 'Approvals_Employee', icon: <ShieldCheck size={16} /> },
           hasPermission('manage_departments') && { label: 'Manage Departments', id: 'Departments', icon: <Building2 size={16} /> },
@@ -1221,7 +1220,7 @@ const Dashboard = () => {
                 roleFilter="Super Admin"
               />
             )}
-            {(activeTab === 'MasterEmployees' || activeTab === 'AddEmployee' || activeTab === 'EditEmployee' || activeTab === 'RemoveEmployee') && (
+            {(activeTab === 'MasterEmployees' || activeTab === 'AddEmployee' || activeTab === 'EditEmployee') && (
               <EmployeeList initialTab={activeTab === 'AddEmployee' ? 'add' : 'list'} />
             )}
             {(activeTab === 'ManageCompanies' || activeTab === 'ManageCompanies_Employee') && <CompanyManagement />}
