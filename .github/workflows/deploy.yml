@@ -17,30 +17,36 @@ jobs:
           password: ${{ secrets.SERVER_PASSWORD }}
           port: ${{ secrets.SERVER_PORT }}
           script: |
+            set -e # Exit immediately if a command exits with a non-zero status
+            
             # If the folder exists but isn't a git repository, back it up so we can clone freshly
             if [ -d "/var/www/react-erp" ] && [ ! -d "/var/www/react-erp/.git" ]; then
+              echo "Directory exists but is not a git repository. Backing up..."
               mv /var/www/react-erp /var/www/react-erp_backup_$(date +%s)
             fi
 
             # Navigate to the deployment directory or clone it if it doesn't exist
             if [ ! -d "/var/www/react-erp" ]; then
+              echo "Cloning repository..."
               mkdir -p /var/www
               cd /var/www
               git clone https://${{ secrets.GIT_PAT }}@github.com/Avnish06/react-erp.git
             fi
             
+            echo "Pulling latest changes..."
             cd /var/www/react-erp
+            git config --global --add safe.directory /var/www/react-erp || true
             git pull origin main
             
-            # Install Backend Dependencies & Restart
-            cd server
+            echo "Installing Backend Dependencies & Restarting..."
+            cd /var/www/react-erp/server
             npm install
             pm2 delete react-erp || true
             pm2 delete react-erp-backend || true
             pm2 start index.js --name "react-erp"
             pm2 save
             
-            # Install Frontend Dependencies & Build
-            cd ../Webfrontend
+            echo "Installing Frontend Dependencies & Building..."
+            cd /var/www/react-erp/Webfrontend
             npm install
             npm run build
