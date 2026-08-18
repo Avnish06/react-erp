@@ -35,7 +35,9 @@ jobs:
             # Install Backend Dependencies & Restart
             cd server
             npm install
-            pm2 restart react-erp-backend || pm2 start server.js --name "react-erp-backend"
+            pm2 delete react-erp || true
+            pm2 delete react-erp-backend || true
+            pm2 start index.js --name "react-erp"
             pm2 save
             
             # Install Frontend Dependencies & Build
