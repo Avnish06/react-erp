@@ -705,8 +705,6 @@ const Dashboard = () => {
           submenu: [
             hasPermission('manage_payroll') && { label: 'Setup Salary Structure', id: 'SetupSalary', icon: <Calculator size={16} /> },
             hasPermission('view_payroll') && { label: 'View Payment History', id: 'Payroll', icon: <CreditCard size={16} /> },
-            hasPermission('view_payroll') && { label: 'Download Payroll Reports', id: 'PayrollReports', icon: <Download size={16} /> },
-            hasPermission('manage_payroll') && { label: 'Generate Salary Slip', id: 'GenerateSlip', icon: <FileText size={16} /> },
             hasPermission('manage_payroll') && { label: 'Manage Deductions & Allowances', id: 'ManageDeductions', icon: <SettingsIcon size={16} /> },
             hasPermission('manage_payroll') && { label: 'Generate Invoice', id: 'GenerateInvoice', icon: <Plus size={16} /> },
             hasPermission('view_payroll') && { label: 'View Invoice Report', id: 'InvoiceReport', icon: <FileText size={16} /> }
@@ -1242,7 +1240,7 @@ const Dashboard = () => {
             
             {(activeTab === 'Announcements') && <Announcements />}
 
-            {(activeTab === 'MasterPayroll' || activeTab === 'Payroll' || activeTab === 'SetupSalary' || activeTab === 'GenerateSlip' || activeTab === 'PayrollReports') && <Payroll initialTab={activeTab === 'SetupSalary' ? 'setup' : 'list'} />}
+            {(activeTab === 'MasterPayroll' || activeTab === 'Payroll' || activeTab === 'SetupSalary') && <Payroll initialTab={activeTab === 'SetupSalary' ? 'setup' : 'list'} />}
             {(activeTab === 'ManageDeductions') && <DeductionManagement />}
             {(activeTab === 'GenerateInvoice' || activeTab === 'InvoiceReport') && <InvoiceManagement initialTab={activeTab === 'GenerateInvoice' ? 'generate' : 'list'} />}
             {(activeTab === 'FinanceReports') && <ReportHistory />}
