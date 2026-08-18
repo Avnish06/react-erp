@@ -17,6 +17,11 @@ jobs:
           password: ${{ secrets.SERVER_PASSWORD }}
           port: ${{ secrets.SERVER_PORT }}
           script: |
+            # If the folder exists but isn't a git repository, back it up so we can clone freshly
+            if [ -d "/var/www/react-erp" ] && [ ! -d "/var/www/react-erp/.git" ]; then
+              mv /var/www/react-erp /var/www/react-erp_backup_$(date +%s)
+            fi
+
             # Navigate to the deployment directory or clone it if it doesn't exist
             if [ ! -d "/var/www/react-erp" ]; then
               mkdir -p /var/www
