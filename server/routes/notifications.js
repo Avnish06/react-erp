@@ -15,6 +15,18 @@ router.post('/announcements', verifyToken, (req, res) => {
   db.query(query, [title, content, req.user.id], (err, result) => {
     if (err) return res.status(500).json({ success: false, message: 'Error creating announcement' });
     
+    // Create a local notification for all users in the ERP
+    db.query('SELECT id FROM users', (userErr, users) => {
+      if (!userErr && users) {
+        users.forEach(u => {
+          db.query(
+            'INSERT INTO notifications (user_id, title, message, type, triggered_by, action_type) VALUES (?, ?, ?, ?, ?, ?)',
+            [u.id, title, content, 'announcement', req.user.id, 'NEW_ANNOUNCEMENT']
+          );
+        });
+      }
+    });
+
     // --- WORKSPACE SYNC ---
     // Instantly push this announcement to the Laravel Workspace database
     try {
