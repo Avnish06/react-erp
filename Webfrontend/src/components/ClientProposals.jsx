@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { FileText, CheckCircle, Clock, Plus, X, Mail, Download } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import logoImg from '../assets/logo_transparent.png';
 
 const defaultTerms = "1. Standard Validity: This proposal is valid for 30 days.\n2. Payment Terms: 50% upfront, 50% upon completion.\n3. Confidentiality: Both parties agree to maintain strict confidentiality.\n4. Scope Adjustments: Any changes to the scope of work may require a revised proposal.";
 
@@ -134,6 +135,24 @@ const ClientProposals = () => {
   };
 
   const generatePDF = async (p, action = 'download') => {
+    // Load image as promise
+    const loadImage = (src) => {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'Anonymous';
+        img.onload = () => resolve(img);
+        img.onerror = (e) => reject(e);
+        img.src = src;
+      });
+    };
+
+    let logo = null;
+    try {
+      logo = await loadImage(logoImg);
+    } catch (e) {
+      console.error('Failed to load logo', e);
+    }
+
     const doc = new jsPDF();
     
     // Header - Modern Dark Blue
@@ -141,15 +160,26 @@ const ClientProposals = () => {
     doc.rect(0, 0, 210, 45, 'F');
     
     // Logo / Branding Text
-    doc.setFontSize(28);
-    doc.setTextColor(255, 255, 255);
-    doc.setFont('helvetica', 'bold');
-    doc.text('HATBALIYA', 20, 22);
-    
-    doc.setFontSize(14);
-    doc.setTextColor(148, 163, 184); // slate-400
-    doc.setFont('helvetica', 'normal');
-    doc.text('TECHNOLOGIES', 20, 32);
+    if (logo) {
+      doc.addImage(logo, 'PNG', 15, 10, 35, 25);
+      doc.setFontSize(22);
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.text('HATBALIYA', 55, 25);
+      doc.setFontSize(12);
+      doc.setTextColor(148, 163, 184); // slate-400
+      doc.setFont('helvetica', 'normal');
+      doc.text('TECHNOLOGIES', 55, 33);
+    } else {
+      doc.setFontSize(28);
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.text('HATBALIYA', 20, 22);
+      doc.setFontSize(14);
+      doc.setTextColor(148, 163, 184); // slate-400
+      doc.setFont('helvetica', 'normal');
+      doc.text('TECHNOLOGIES', 20, 32);
+    }
 
     // Proposal Tag
     doc.setFontSize(12);

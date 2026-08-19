@@ -116,9 +116,11 @@ const ClientContracts = () => {
   const fetchContracts = async () => {
     try {
       setLoading(true);
-      const res = await axios.get('/api/client-management/contracts');
+      const res = await axios.get('/api/client-management/proposals');
       if (res.data.success) {
-        setContracts(res.data.contracts);
+        // Only show proposals that are approved and ready for signing (or already signed)
+        const activeContracts = res.data.proposals.filter(p => p.admin_approved || p.status !== 'Draft');
+        setContracts(activeContracts);
       }
     } catch (err) {
       toast.error('Failed to load contracts');
@@ -131,10 +133,13 @@ const ClientContracts = () => {
     if (!signingContract) return;
     try {
       const payload = {
-        signature: signatureData,
-        role: isClient ? 'client' : 'admin'
+        signature: signatureData
       };
-      const res = await axios.put(`/api/client-management/contracts/${signingContract.id}/sign`, payload);
+      const endpoint = isClient 
+        ? `/api/client-management/proposals/${signingContract.id}/client-sign`
+        : `/api/client-management/proposals/${signingContract.id}/admin-sign`;
+        
+      const res = await axios.put(endpoint, payload);
       if (res.data.success) {
         toast.success('Contract signed successfully!');
         setSigningContract(null);
@@ -168,7 +173,7 @@ const ClientContracts = () => {
           contracts.map(c => (
             <div key={c.id} className="p-4 border-b border-slate-100 grid grid-cols-5 items-center hover:bg-slate-50 text-sm">
               <div className="font-medium text-slate-800">{c.client_name}</div>
-              <div className="text-slate-600">#{c.proposal_id}</div>
+              <div className="text-slate-600">#{c.id}</div>
               <div>
                 <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${c.status === 'Signed' ? 'bg-emerald-100 text-emerald-700' : 'bg-orange-100 text-orange-700'}`}>
                   {c.status}
