@@ -177,7 +177,7 @@ router.post('/onboard', verifyToken, (req, res) => {
   
   db.query(
     'INSERT INTO customers (name, company_name, email, phone, requirements, assigned_to, stage, health_score, portal_access_enabled, password) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    [name, company_name, email, phone, requirements, created_by, 'Won', 100, true, generatedPassword],
+    [name, company_name, email, phone, requirements, created_by, 'Active', 100, true, generatedPassword],
     async (err, result) => {
       if (err) return res.status(500).json({ success: false, message: 'Database error', error: err.message });
       
