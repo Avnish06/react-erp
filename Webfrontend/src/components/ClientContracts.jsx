@@ -105,6 +105,10 @@ const ClientContracts = () => {
   const [loading, setLoading] = useState(true);
   const [signingContract, setSigningContract] = useState(null);
 
+  const user = JSON.parse(localStorage.getItem('user')) || {};
+  const isClient = user.role === 'Client';
+  const isAdmin = user.role === 'Admin' || user.role === 'Super Admin' || user.role === 'Developer';
+
   useEffect(() => {
     fetchContracts();
   }, []);
@@ -128,7 +132,7 @@ const ClientContracts = () => {
     try {
       const payload = {
         signature: signatureData,
-        role: 'admin' // Could be dynamic if logged in as client
+        role: isClient ? 'client' : 'admin'
       };
       const res = await axios.put(`/api/client-management/contracts/${signingContract.id}/sign`, payload);
       if (res.data.success) {
@@ -178,18 +182,26 @@ const ClientContracts = () => {
                   {c.client_signature ? <CheckCircle size={12}/> : <Clock size={12}/>} Client
                 </span>
               </div>
-              <div className="text-right">
-                {!c.admin_signature && (
+              <div className="text-right flex justify-end gap-2">
+                {isClient && !c.client_signature && (
                   <button 
                     onClick={() => setSigningContract(c)}
-                    className="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1.5 rounded text-xs font-bold transition-colors"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded text-xs font-bold transition-colors shadow-sm"
                   >
                     E-Sign Contract
                   </button>
                 )}
-                {c.admin_signature && (
+                {isAdmin && !c.admin_signature && (
                   <button 
-                    className="bg-slate-100 text-slate-600 px-3 py-1.5 rounded text-xs font-bold transition-colors"
+                    onClick={() => setSigningContract(c)}
+                    className="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1.5 rounded text-xs font-bold transition-colors shadow-sm"
+                  >
+                    E-Sign Contract
+                  </button>
+                )}
+                {((isClient && c.client_signature) || (isAdmin && c.admin_signature)) && (
+                  <button 
+                    className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded text-xs font-bold transition-colors border border-slate-300"
                   >
                     View PDF
                   </button>

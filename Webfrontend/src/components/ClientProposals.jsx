@@ -136,76 +136,103 @@ const ClientProposals = () => {
   const generatePDF = async (p, action = 'download') => {
     const doc = new jsPDF();
     
-    // Header
-    doc.setFillColor(30, 58, 138); // bg-orange-900 -> bg-blue-900 equivalent
-    doc.rect(0, 0, 210, 40, 'F');
+    // Header - Modern Dark Blue
+    doc.setFillColor(15, 23, 42); // slate-900
+    doc.rect(0, 0, 210, 45, 'F');
     
-    doc.setFontSize(26);
+    // Logo / Branding Text
+    doc.setFontSize(28);
     doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'bold');
-    doc.text('PROJECT PROPOSAL', 105, 20, { align: 'center' });
+    doc.text('HATBALIYA', 20, 22);
     
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'normal');
-    doc.text('ERPMaster IT Solutions', 105, 30, { align: 'center' });
-
-    // Client Details
-    doc.setTextColor(50, 50, 50);
     doc.setFontSize(14);
+    doc.setTextColor(148, 163, 184); // slate-400
+    doc.setFont('helvetica', 'normal');
+    doc.text('TECHNOLOGIES', 20, 32);
+
+    // Proposal Tag
+    doc.setFontSize(12);
+    doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'bold');
-    doc.text('Prepared For:', 20, 60);
+    doc.text('PROJECT PROPOSAL', 190, 28, { align: 'right' });
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(148, 163, 184);
+    doc.text(`Date: ${new Date(p.created_at).toLocaleDateString()}`, 190, 35, { align: 'right' });
+
+    // Client Details Section (Card like background)
+    doc.setFillColor(248, 250, 252); // slate-50
+    doc.roundedRect(20, 55, 170, 35, 3, 3, 'F');
     
+    doc.setTextColor(30, 41, 59); // slate-800
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('PREPARED FOR:', 25, 65);
+    
+    doc.setFontSize(14);
+    doc.setTextColor(15, 23, 42); // slate-900
+    doc.text(p.client_name, 25, 75);
+    
+    if (p.client_email) {
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(100, 116, 139); // slate-500
+      doc.text(p.client_email, 25, 82);
+    }
+
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(30, 41, 59);
+    doc.text('PROPOSAL ID:', 130, 65);
     doc.setFontSize(12);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Client Name: ${p.client_name}`, 20, 70);
-    if (p.client_email) {
-      doc.text(`Email: ${p.client_email}`, 20, 78);
-    }
-    doc.text(`Date: ${new Date(p.created_at).toLocaleDateString()}`, 150, 70);
-    doc.text(`Proposal ID: PR-${p.id}`, 150, 78);
+    doc.text(`PR-${p.id}`, 130, 75);
 
     // Project Details
-    doc.setFontSize(16);
+    doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(30, 58, 138);
-    doc.text('Project Outline', 20, 110);
+    doc.setTextColor(15, 23, 42);
+    doc.text(p.project_name.toUpperCase(), 20, 110);
     
-    doc.setDrawColor(200, 200, 200);
-    doc.line(20, 115, 190, 115);
+    // Underline accent
+    doc.setDrawColor(234, 88, 12); // orange-600
+    doc.setLineWidth(1.5);
+    doc.line(20, 113, 40, 113);
 
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(50, 50, 50);
-    doc.text('Project Name:', 20, 130);
-    doc.setFont('helvetica', 'normal');
-    doc.text(p.project_name, 60, 130);
-
-    doc.setFont('helvetica', 'bold');
-    doc.text('Executive Summary / Scope of Work:', 20, 145);
+    doc.setTextColor(51, 65, 85); // slate-700
+    doc.text('Executive Summary / Scope of Work', 20, 125);
     
     doc.setFont('helvetica', 'normal');
+    doc.setFontSize(11);
+    doc.setTextColor(71, 85, 105); // slate-600
     const splitDetails = doc.splitTextToSize(p.details || 'Standard project scope applies. No additional details provided.', 170);
-    doc.text(splitDetails, 20, 155);
+    doc.text(splitDetails, 20, 135);
 
-    let finalY = 155 + (splitDetails.length * 7) + 10;
+    let finalY = 135 + (splitDetails.length * 6) + 15;
 
     // Pricing / Investment Table
     autoTable(doc, {
       startY: finalY,
       head: [['Description', 'Estimated Investment']],
       body: [
-        ['Core Project Development & Implementation', `₹${Number(p.value).toLocaleString()}`]
+        ['Core Project Development & Implementation', `Rs. ${Number(p.value).toLocaleString()}`]
       ],
-      theme: 'striped',
-      headStyles: { fillColor: [30, 58, 138], textColor: 255, fontStyle: 'bold' },
-      styles: { fontSize: 12, cellPadding: 6 }
+      theme: 'grid',
+      headStyles: { fillColor: [15, 23, 42], textColor: 255, fontStyle: 'bold', halign: 'center' },
+      bodyStyles: { fontSize: 11, textColor: [30, 41, 59] },
+      columnStyles: {
+        1: { halign: 'right', fontStyle: 'bold', textColor: [234, 88, 12] } // Orange accent for price
+      },
+      styles: { cellPadding: 8 }
     });
 
     finalY = doc.lastAutoTable.finalY + 20;
 
     // Terms and Conditions
     if (p.terms) {
-      // Check if we need a new page for terms
       if (finalY > 230) {
         doc.addPage();
         finalY = 20;
@@ -213,25 +240,28 @@ const ClientProposals = () => {
       
       doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
-      doc.setTextColor(30, 58, 138);
+      doc.setTextColor(15, 23, 42);
       doc.text('Terms & Conditions', 20, finalY);
       
-      doc.setDrawColor(200, 200, 200);
-      doc.line(20, finalY + 5, 190, finalY + 5);
+      // Underline accent
+      doc.setDrawColor(234, 88, 12); // orange-600
+      doc.setLineWidth(1);
+      doc.line(20, finalY + 2, 35, finalY + 2);
 
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      doc.setTextColor(80, 80, 80);
+      doc.setTextColor(100, 116, 139);
       const splitTerms = doc.splitTextToSize(p.terms, 170);
-      doc.text(splitTerms, 20, finalY + 15);
+      doc.text(splitTerms, 20, finalY + 12);
       
-      finalY = finalY + 15 + (splitTerms.length * 5) + 20;
+      finalY = finalY + 12 + (splitTerms.length * 5) + 25;
     }
 
     // Footer / Signoff
-    doc.setFontSize(10);
-    doc.setTextColor(100, 100, 100);
-    doc.text('We look forward to working with you!', 105, finalY, { align: 'center' });
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'italic');
+    doc.setTextColor(148, 163, 184);
+    doc.text('We look forward to transforming your vision into reality.', 105, finalY, { align: 'center' });
 
     if (action === 'download') {
       doc.save(`Proposal_${p.client_name.replace(/\s+/g, '_')}_PR${p.id}.pdf`);
