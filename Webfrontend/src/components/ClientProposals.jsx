@@ -11,6 +11,13 @@ const ClientProposals = () => {
   const [proposals, setProposals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [signModalOpen, setSignModalOpen] = useState(false);
+  const [activeProposalId, setActiveProposalId] = useState(null);
+  const [signatureText, setSignatureText] = useState('');
+  
+  const user = JSON.parse(localStorage.getItem('user')) || {};
+  const isClient = user.role === 'Client';
+  const isAdmin = user.role === 'Admin' || user.role === 'Super Admin' || user.role === 'Developer';
   
   const [formData, setFormData] = useState({
     client_name: '',
@@ -48,6 +55,66 @@ const ClientProposals = () => {
       }
     } catch (err) {
       toast.error('Failed to approve proposal');
+    }
+  };
+
+  const handleSignProposal = async () => {
+    if (!signatureText.trim()) return toast.error('Please type your signature');
+    
+    try {
+      const endpoint = isClient ? 'client-sign' : 'admin-sign';
+      const res = await axios.put(`/api/client-management/proposals/${activeProposalId}/${endpoint}`, {
+        signature: signatureText
+      });
+      if (res.data.success) {
+        toast.success(res.data.message);
+        setSignModalOpen(false);
+        setSignatureText('');
+        fetchProposals();
+      }
+    } catch (err) {
+      toast.error('Failed to sign proposal');
+    }
+  };
+
+  const openSignModal = (id) => {
+    setActiveProposalId(id);
+    setSignModalOpen(true);
+  };
+
+  const handleConvertToInvoice = async (p) => {
+    const invId = `INV-${Math.floor(1000 + Math.random() * 9000)}`;
+    const items = [{ description: `Proposal: ${p.project_name}`, qty: 1, rate: p.value }];
+    const total = parseFloat(p.value) * 1.18; // adding 18% tax
+    
+    // Create dummy pdf blob for the invoice
+    const doc = new jsPDF();
+    doc.text(`Invoice for ${p.project_name}`, 20, 20);
+    const pdfBlob = doc.output('blob');
+
+    const formData = new FormData();
+    formData.append('id', invId);
+    formData.append('client_name', p.client_name);
+    formData.append('client_email', p.client_email);
+    formData.append('total_amount', total);
+    formData.append('invoice_date', new Date().toISOString().split('T')[0]);
+    formData.append('currency', 'INR');
+    formData.append('is_recurring', false);
+    formData.append('items', JSON.stringify(items));
+    formData.append('invoice_pdf', pdfBlob, `Invoice_${invId}.pdf`);
+
+    const loadingToast = toast.loading('Converting proposal to Invoice...');
+    try {
+      const res = await axios.post('/api/invoices', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      if (res.data.success) {
+        toast.success(`Converted to Invoice #${invId}! You can view it in the Invoices tab.`, { id: loadingToast });
+      } else {
+        toast.error('Error creating invoice', { id: loadingToast });
+      }
+    } catch (err) {
+      toast.error('Failed to convert to invoice', { id: loadingToast });
     }
   };
 
@@ -219,11 +286,13 @@ const ClientProposals = () => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2 text-slate-800"><FileText /> Proposals & Approvals</h2>
-          <p className="text-slate-500 text-sm mt-1">Generate professional PDF proposals and manage client approvals.</p>
+          <p className="text-slate-500 text-sm mt-1">Generate professional PDF proposals, sign them, and convert to invoices.</p>
         </div>
-        <button onClick={() => setIsModalOpen(true)} className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors shadow-sm">
-          <Plus size={16} /> New Proposal
-        </button>
+        {!isClient && (
+          <button onClick={() => setIsModalOpen(true)} className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors shadow-sm">
+            <Plus size={16} /> New Proposal
+          </button>
+        )}
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden overflow-x-auto">
@@ -250,9 +319,9 @@ const ClientProposals = () => {
                 <div className="text-slate-600">{p.project_name}</div>
                 <div className="font-mono text-slate-800 font-bold">₹{Number(p.value).toLocaleString()}</div>
                 <div>
-                  <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${p.admin_approved ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-orange-100 text-orange-700 border border-orange-200'}`}>
-                    {p.admin_approved ? <CheckCircle size={12}/> : <Clock size={12}/>}
-                    {p.status}
+                  <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${p.status === 'Fully Executed' || p.status === 'Approved' ? 'bg-green-100 text-green-700 border border-green-200' : p.status === 'Client Signed' ? 'bg-blue-100 text-blue-700 border border-blue-200' : 'bg-orange-100 text-orange-700 border border-orange-200'}`}>
+                    {p.status === 'Fully Executed' || p.status === 'Approved' ? <CheckCircle size={12}/> : <Clock size={12}/>}
+                    {p.status || 'Draft'}
                   </span>
                 </div>
                 <div className="text-right col-span-2 flex justify-end gap-2 items-center flex-wrap">
@@ -265,29 +334,55 @@ const ClientProposals = () => {
                   >
                     <Download size={14} /> PDF
                   </button>
-                  <button 
-                    onClick={() => generatePDF(p, 'email')}
-                    className="bg-orange-50 hover:bg-orange-100 text-orange-600 px-3 py-1.5 rounded text-xs font-bold flex items-center gap-1 transition-colors border border-orange-200"
-                    title="Send Proposal via Mail"
-                  >
-                    <Mail size={14} /> Email
-                  </button>
-
-                  {/* Workflow Actions */}
-                  {!p.admin_approved && (
+                  
+                  {!isClient && (
                     <button 
-                      onClick={() => approveProposal(p.id)}
-                      className="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded text-xs font-bold whitespace-nowrap transition-colors shadow-sm ml-2"
+                      onClick={() => generatePDF(p, 'email')}
+                      className="bg-orange-50 hover:bg-orange-100 text-orange-600 px-3 py-1.5 rounded text-xs font-bold flex items-center gap-1 transition-colors border border-orange-200"
+                      title="Send Proposal via Mail"
                     >
-                      CEO Approve
+                      <Mail size={14} /> Email
                     </button>
                   )}
-                  {p.admin_approved && (
+
+                  {/* Workflow Actions */}
+                  {/* Client signs */}
+                  {isClient && (p.status === 'Draft' || !p.status) && (
                     <button 
-                      onClick={() => handleGenerateContract(p)}
-                      className="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1.5 rounded text-xs font-bold whitespace-nowrap transition-colors shadow-sm ml-2"
+                      onClick={() => openSignModal(p.id)}
+                      className="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded text-xs font-bold whitespace-nowrap transition-colors shadow-sm ml-2"
                     >
-                      Generate Contract
+                      Sign Proposal
+                    </button>
+                  )}
+                  
+                  {/* Admin Countersigns */}
+                  {isAdmin && p.status === 'Client Signed' && (
+                    <button 
+                      onClick={() => openSignModal(p.id)}
+                      className="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded text-xs font-bold whitespace-nowrap transition-colors shadow-sm ml-2"
+                    >
+                      Counter Sign
+                    </button>
+                  )}
+
+                  {/* Convert to Invoice */}
+                  {isAdmin && p.status === 'Fully Executed' && (
+                    <button 
+                      onClick={() => handleConvertToInvoice(p)}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-xs font-bold whitespace-nowrap transition-colors shadow-sm ml-2"
+                    >
+                      Convert to Bill
+                    </button>
+                  )}
+
+                  {/* Legacy buttons */}
+                  {!p.admin_approved && isAdmin && p.status !== 'Client Signed' && p.status !== 'Fully Executed' && (
+                    <button 
+                      onClick={() => approveProposal(p.id)}
+                      className="bg-slate-500 hover:bg-slate-600 text-white px-3 py-1.5 rounded text-xs font-bold whitespace-nowrap transition-colors shadow-sm ml-2"
+                    >
+                      CEO Approve
                     </button>
                   )}
                 </div>
@@ -340,6 +435,36 @@ const ClientProposals = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Signature Modal */}
+      {signModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200">
+            <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+              <h3 className="font-bold text-slate-800 flex items-center gap-2"><FileText className="text-emerald-600" size={18}/> E-Sign Proposal</h3>
+              <button onClick={() => setSignModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors"><X size={18}/></button>
+            </div>
+            <div className="p-6">
+              <label className="block text-sm font-bold text-slate-700 mb-2">Type your full name to sign electronically:</label>
+              <input 
+                type="text" 
+                value={signatureText}
+                onChange={(e) => setSignatureText(e.target.value)}
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none transition-all font-serif italic text-lg"
+                placeholder="John Doe"
+              />
+              <p className="text-xs text-slate-500 mt-3 flex items-center gap-1">
+                <CheckCircle size={12} className="text-emerald-500"/> By signing, I agree to the terms and conditions outlined in the proposal.
+              </p>
+              
+              <div className="mt-6 flex justify-end gap-3">
+                <button onClick={() => setSignModalOpen(false)} className="px-5 py-2.5 text-sm font-bold text-slate-500 hover:text-slate-800">Cancel</button>
+                <button onClick={handleSignProposal} className="px-6 py-2.5 text-sm bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 shadow-md">Submit Signature</button>
+              </div>
+            </div>
           </div>
         </div>
       )}

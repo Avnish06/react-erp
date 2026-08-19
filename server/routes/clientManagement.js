@@ -23,12 +23,26 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // @route   GET /api/client-management/proposals
-// @desc    Get all proposals
+// @desc    Get all proposals (or filter by client if logged in as client)
 router.get('/proposals', verifyToken, (req, res) => {
-  db.query('SELECT * FROM proposals ORDER BY created_at DESC', (err, results) => {
-    if (err) return res.status(500).json({ success: false, message: 'Database error' });
-    res.json({ success: true, proposals: results });
-  });
+  if (req.user.role === 'Client') {
+    // Fetch client email from customers table
+    db.query('SELECT email FROM customers WHERE id = ?', [req.user.id], (err, results) => {
+      if (err || results.length === 0) return res.status(500).json({ success: false, message: 'Database error' });
+      const clientEmail = results[0].email;
+      
+      db.query('SELECT * FROM proposals WHERE client_email = ? ORDER BY created_at DESC', [clientEmail], (err, propResults) => {
+        if (err) return res.status(500).json({ success: false, message: 'Database error' });
+        res.json({ success: true, proposals: propResults });
+      });
+    });
+  } else {
+    // Admin / Employee view
+    db.query('SELECT * FROM proposals ORDER BY created_at DESC', (err, results) => {
+      if (err) return res.status(500).json({ success: false, message: 'Database error' });
+      res.json({ success: true, proposals: results });
+    });
+  }
 });
 
 // @route   POST /api/client-management/proposals
@@ -85,15 +99,45 @@ router.post('/proposals/:id/send-email', verifyToken, upload.single('proposal_pd
 // @desc    Admin (CEO) approves a proposal
 router.put('/proposals/:id/approve', verifyToken, (req, res) => {
   const proposalId = req.params.id;
-  const adminId = req.user.id;
-
-  // Verify if user is an admin or CEO based on role check in middleware, or assume valid for now
+  
   db.query(
     'UPDATE proposals SET status = ?, admin_approved = ? WHERE id = ?',
     ['Approved', true, proposalId],
     (err, result) => {
       if (err) return res.status(500).json({ success: false, message: 'Database error' });
       res.json({ success: true, message: 'Proposal approved by Admin' });
+    }
+  );
+});
+
+// @route   PUT /api/client-management/proposals/:id/client-sign
+// @desc    Client signs the proposal
+router.put('/proposals/:id/client-sign', verifyToken, (req, res) => {
+  const proposalId = req.params.id;
+  const { signature } = req.body;
+  
+  db.query(
+    'UPDATE proposals SET client_signature = ?, client_signed_at = NOW(), status = ? WHERE id = ?',
+    [signature, 'Client Signed', proposalId],
+    (err, result) => {
+      if (err) return res.status(500).json({ success: false, message: 'Database error' });
+      res.json({ success: true, message: 'Proposal signed successfully by client!' });
+    }
+  );
+});
+
+// @route   PUT /api/client-management/proposals/:id/admin-sign
+// @desc    Admin counter-signs the proposal
+router.put('/proposals/:id/admin-sign', verifyToken, (req, res) => {
+  const proposalId = req.params.id;
+  const { signature } = req.body;
+  
+  db.query(
+    'UPDATE proposals SET admin_signature = ?, admin_signed_at = NOW(), status = ? WHERE id = ?',
+    [signature, 'Fully Executed', proposalId],
+    (err, result) => {
+      if (err) return res.status(500).json({ success: false, message: 'Database error' });
+      res.json({ success: true, message: 'Proposal fully executed!' });
     }
   );
 });
