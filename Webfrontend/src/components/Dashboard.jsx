@@ -2402,7 +2402,7 @@ function DashboardStats({ stats, onNavigate }) {
             {/* Total Revenue */}
             <StatCard
               label="Total Revenue"
-              value={`₹${(stats.revenueTotal || 1250000).toLocaleString()}`}
+              value={`₹${(stats.revenueTotal || 0).toLocaleString()}`}
               color="emerald"
               icon={<TrendingUp size={24} />}
               onClick={() => onNavigate('FinancialEarningYear')}
@@ -2411,7 +2411,7 @@ function DashboardStats({ stats, onNavigate }) {
             {/* Total Expenses */}
             <StatCard
               label="Total Expenses"
-              value={`₹${(stats.payrollTotal || 528000).toLocaleString()}`}
+              value={`₹${(stats.payrollTotal || 0).toLocaleString()}`}
               color="rose"
               icon={<TrendingDown size={24} />}
               onClick={() => onNavigate('WorkflowHub')}
@@ -2420,7 +2420,7 @@ function DashboardStats({ stats, onNavigate }) {
             {/* Active Clients */}
             <StatCard
               label="Active Clients"
-              value={stats.activeClients || 42}
+              value={stats.activeClients || 0}
               color="blue"
               icon={<Users size={24} />}
               onClick={() => onNavigate('CustomerMenu')}
@@ -2429,7 +2429,7 @@ function DashboardStats({ stats, onNavigate }) {
             {/* Active Employees */}
             <StatCard
               label="Active Employees"
-              value={stats.totalEmployees || 18}
+              value={stats.totalEmployees || 0}
               color="amber"
               icon={<UserCircle size={24} />}
               onClick={() => onNavigate('ViewEmployees')}
@@ -2438,7 +2438,7 @@ function DashboardStats({ stats, onNavigate }) {
             {/* Pending Approvals */}
             <StatCard
               label="Pending Approvals"
-              value={stats.pendingApprovals || stats.pendingLeaves || 5}
+              value={stats.pendingApprovals || stats.pendingLeaves || 0}
               color="purple"
               icon={<ShieldCheck size={24} />}
               onClick={() => onNavigate('Approvals')}
@@ -2447,7 +2447,7 @@ function DashboardStats({ stats, onNavigate }) {
             {/* Upcoming Payments */}
             <StatCard
               label="Upcoming Payments"
-              value="₹84,500"
+              value={`₹${(stats.upcomingPayments || 0).toLocaleString()}`}
               color="indigo"
               icon={<Calendar size={24} />}
               onClick={() => onNavigate('Payroll')}
