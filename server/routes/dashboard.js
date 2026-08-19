@@ -9,10 +9,10 @@ router.get('/stats', verifyToken, (req, res) => {
     totalEmployees: "SELECT COUNT(*) as count FROM users WHERE company_name = ?",
     totalAdmins: "SELECT COUNT(*) as count FROM users JOIN roles ON users.role_id = roles.id WHERE roles.name = 'Admin' AND users.company_name = ?",
     totalDepartments: "SELECT COUNT(*) as count FROM departments",
-    pendingLeaves: "SELECT COUNT(*) as count FROM leave_requests WHERE status = 'Pending' AND company_name = ?",
-    activeProjects: "SELECT COUNT(*) as count FROM projects WHERE status = 'Ongoing' AND company_name = ?",
-    payrollTotal: "SELECT SUM(net_salary) as total FROM payroll WHERE company_name = ?",
-    unreadCount: "SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = FALSE AND company_name = ?"
+    pendingLeaves: "SELECT COUNT(*) as count FROM leave_requests WHERE status = 'Pending'",
+    activeProjects: "SELECT COUNT(*) as count FROM projects WHERE status = 'Ongoing'",
+    payrollTotal: "SELECT SUM(net_salary) as total FROM payroll",
+    unreadCount: "SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = FALSE"
   };
 
   const executeQuery = (query, params = []) => {
@@ -28,10 +28,10 @@ router.get('/stats', verifyToken, (req, res) => {
     executeQuery(queries.totalEmployees, [req.company_name]),
     executeQuery(queries.totalAdmins, [req.company_name]),
     executeQuery(queries.totalDepartments), // Assuming departments are shared or not yet scoped
-    executeQuery(queries.pendingLeaves, [req.company_name]),
-    executeQuery(queries.activeProjects, [req.company_name]),
-    executeQuery(queries.payrollTotal, [req.company_name]),
-    executeQuery(queries.unreadCount, [req.user.id, req.company_name])
+    executeQuery(queries.pendingLeaves),
+    executeQuery(queries.activeProjects),
+    executeQuery(queries.payrollTotal),
+    executeQuery(queries.unreadCount, [req.user.id])
   ])
     .then(([employees, admins, departments, leaves, projects, payroll, notifs]) => {
       res.json({
