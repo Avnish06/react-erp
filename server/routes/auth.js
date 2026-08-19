@@ -178,6 +178,27 @@ router.post('/login', async (req, res) => {
 // Get Current User Info & Latest Permissions
 router.get('/me', verifyToken, (req, res) => {
   const userId = req.user.id;
+  const userRole = req.user.role;
+  
+  if (userRole === 'Client') {
+    db.query('SELECT * FROM customers WHERE id = ?', [userId], (err, clients) => {
+      if (err) return res.status(500).json({ success: false, message: 'Database error' });
+      if (clients.length === 0) return res.status(404).json({ success: false, message: 'User not found' });
+      
+      const client = clients[0];
+      return res.json({
+        success: true,
+        user: {
+          id: client.id,
+          name: client.name,
+          email: client.email,
+          role: 'Client',
+          permissions: []
+        }
+      });
+    });
+    return;
+  }
   
   db.query(`
     SELECT users.id, users.employee_id, users.role_id, users.name, users.email, roles.name as role, e.company_name 
