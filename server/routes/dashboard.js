@@ -15,7 +15,7 @@ router.get('/stats', verifyToken, (req, res) => {
     unreadCount: "SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = FALSE",
     financeStatsYTD: `
       SELECT 
-        COALESCE(SUM(CASE WHEN type = 'revenue' THEN amount_base ELSE 0 END), 0) as totalRevenue,
+        COALESCE(SUM(CASE WHEN type = 'income' THEN amount_base ELSE 0 END), 0) as totalRevenue,
         COALESCE(SUM(CASE WHEN type = 'expense' THEN amount_base ELSE 0 END), 0) as totalExpenses
       FROM finance_transactions
       WHERE YEAR(date) = YEAR(CURRENT_DATE())
@@ -23,7 +23,7 @@ router.get('/stats', verifyToken, (req, res) => {
     monthlyRevenue: `
       SELECT COALESCE(SUM(amount_base), 0) as total 
       FROM finance_transactions 
-      WHERE type = 'revenue' 
+      WHERE type = 'income' 
       AND MONTH(date) = MONTH(CURRENT_DATE()) 
       AND YEAR(date) = YEAR(CURRENT_DATE())
     `

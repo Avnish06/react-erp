@@ -78,21 +78,45 @@ router.post('/generate', (req, res) => {
 
 // Update Payroll Record
 router.put('/:id', (req, res) => {
-  const { basic_salary, hra, da, bonus, deductions, month_year } = req.body;
+  const { basic_salary, hra, da, bonus, deductions, month_year, user_id } = req.body;
   const net_salary = parseFloat(basic_salary) + parseFloat(hra) + parseFloat(da) + parseFloat(bonus) - parseFloat(deductions);
 
-  const query = 'UPDATE payroll SET basic_salary=?, hra=?, da=?, bonus=?, deductions=?, net_salary=?, month_year=? WHERE id=?';
-  db.query(query, [basic_salary, hra, da, bonus, deductions, net_salary, month_year, req.params.id], (err, result) => {
-    if (err) return res.status(500).json({ success: false, message: 'Error updating payroll' });
-    res.json({ success: true, message: 'Payroll updated successfully' });
+  db.query('SELECT user_id, month_year FROM payroll WHERE id = ?', [req.params.id], (err, rows) => {
+    if (err || rows.length === 0) return res.status(500).json({ success: false, message: 'Error finding payroll' });
+    
+    const old_user_id = rows[0].user_id;
+    const old_month_year = rows[0].month_year;
+    
+    const query = 'UPDATE payroll SET basic_salary=?, hra=?, da=?, bonus=?, deductions=?, net_salary=?, month_year=? WHERE id=?';
+    db.query(query, [basic_salary, hra, da, bonus, deductions, net_salary, month_year, req.params.id], (err, result) => {
+      if (err) return res.status(500).json({ success: false, message: 'Error updating payroll' });
+      
+      // Update the corresponding finance transaction
+      const oldDesc = `Payroll for ${old_month_year} (User ${old_user_id})`;
+      const newDesc = `Payroll for ${month_year} (User ${user_id || old_user_id})`;
+      db.query('UPDATE finance_transactions SET amount=?, amount_base=?, description=? WHERE description=?', [net_salary, net_salary, newDesc, oldDesc]);
+      
+      res.json({ success: true, message: 'Payroll updated successfully' });
+    });
   });
 });
 
 // Delete Payroll Record
 router.delete('/:id', (req, res) => {
-  db.query('DELETE FROM payroll WHERE id = ?', [req.params.id], (err, result) => {
-    if (err) return res.status(500).json({ success: false, message: 'Error deleting payroll' });
-    res.json({ success: true, message: 'Payroll deleted successfully' });
+  db.query('SELECT user_id, month_year FROM payroll WHERE id = ?', [req.params.id], (err, rows) => {
+    if (err || rows.length === 0) return res.status(500).json({ success: false, message: 'Error finding payroll' });
+    
+    const { user_id, month_year } = rows[0];
+    
+    db.query('DELETE FROM payroll WHERE id = ?', [req.params.id], (err, result) => {
+      if (err) return res.status(500).json({ success: false, message: 'Error deleting payroll' });
+      
+      // Delete the corresponding finance transaction
+      const desc = `Payroll for ${month_year} (User ${user_id})`;
+      db.query('DELETE FROM finance_transactions WHERE description=?', [desc]);
+      
+      res.json({ success: true, message: 'Payroll deleted successfully' });
+    });
   });
 });
 
