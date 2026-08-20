@@ -4,6 +4,7 @@ import html2canvas from 'html2canvas';
 import { Download, Edit, X, Save, FileText, CheckCircle2, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import EmployeeOnboardingWizard from './EmployeeOnboardingWizard';
+import logoImg from '../assets/logo_transparent.png';
 
 export default function OfferLetterGenerator({ onClose }) {
   const [isEditing, setIsEditing] = useState(true);
@@ -184,10 +185,13 @@ export default function OfferLetterGenerator({ onClose }) {
             >
               {/* Letterhead Header */}
               <div className="border-b-2 border-orange-900 pb-6 mb-8 flex justify-between items-end">
-                <div>
-                  <h1 className="text-3xl font-black text-blue-900 uppercase tracking-tight">{details.companyName}</h1>
-                  <p className="text-sm text-slate-500 mt-1">{details.companyAddress}</p>
-                  <p className="text-sm text-orange-600">{details.companyWebsite}</p>
+                <div className="flex items-center gap-4">
+                  <img src={logoImg} alt="Company Logo" className="h-16 object-contain" />
+                  <div>
+                    <h1 className="text-3xl font-black text-blue-900 uppercase tracking-tight">{details.companyName}</h1>
+                    <p className="text-sm text-slate-500 mt-1">{details.companyAddress}</p>
+                    <p className="text-sm text-orange-600">{details.companyWebsite}</p>
+                  </div>
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-semibold text-slate-600">Date: {details.issueDate}</p>

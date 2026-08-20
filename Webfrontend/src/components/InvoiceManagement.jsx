@@ -4,6 +4,7 @@ import { Search, Plus, FileText, Download, Printer, Filter, Trash2, Mail } from 
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import logoImg from '../assets/logo_transparent.png';
 
 const InvoiceManagement = ({ initialTab = 'history' }) => {
   const [view, setView] = useState(initialTab === 'generate' ? 'generate' : 'list');
@@ -57,25 +58,94 @@ const InvoiceManagement = ({ initialTab = 'history' }) => {
   const handleGenerateInvoice = async () => {
     if (!client) return toast.error('Please select a client');
 
+    // Load image as promise
+    const loadImage = (src) => {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'Anonymous';
+        img.onload = () => resolve(img);
+        img.onerror = (e) => reject(e);
+        img.src = src;
+      });
+    };
+
+    let logo = null;
+    try {
+      logo = await loadImage(logoImg);
+    } catch (e) {
+      console.error('Failed to load logo', e);
+    }
+
     const doc = new jsPDF();
     const invId = `INV-${Math.floor(1000 + Math.random() * 9000)}`;
 
-    doc.setFontSize(22);
-    doc.setTextColor(30, 58, 138);
-    doc.text('ERPMaster IT Solutions', 105, 20, { align: 'center' });
+    // Create a stunning, professional cover-like header
+    doc.setFillColor(10, 25, 47); // Dark navy blue
+    doc.rect(0, 0, 210, 50, 'F');
+    doc.setFillColor(0, 212, 255); // Cyan/Bright Blue accent
+    doc.rect(0, 50, 210, 2, 'F');
+    doc.setFillColor(17, 34, 64);
+    doc.triangle(150, 0, 210, 0, 210, 50, 'F');
 
-    doc.setFontSize(16);
-    doc.setTextColor(100);
-    doc.text('TAX INVOICE', 105, 30, { align: 'center' });
+    // Logo / Branding Text
+    if (logo) {
+      doc.addImage(logo, 'PNG', 15, 10, 35, 25);
+      doc.setFontSize(22);
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.text('HATBALIYA', 55, 22);
+      doc.setFontSize(12);
+      doc.setTextColor(136, 146, 176); 
+      doc.setFont('helvetica', 'normal');
+      doc.text('TECHNOLOGIES', 55, 28);
+    } else {
+      doc.setFontSize(26);
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.text('HATBALIYA', 20, 25);
+      doc.setFontSize(14);
+      doc.setTextColor(136, 146, 176); 
+      doc.setFont('helvetica', 'normal');
+      doc.text('TECHNOLOGIES', 20, 32);
+    }
 
-    doc.setFontSize(10);
-    doc.setTextColor(0);
-    doc.text(`Invoice ID: ${invId}`, 20, 45);
-    doc.text(`Date: ${date}`, 20, 52);
-    doc.text(`Client: ${client}`, 20, 59);
+    // Title Tag
+    doc.setFontSize(14);
+    doc.setTextColor(0, 212, 255); // Cyan accent
+    doc.setFont('helvetica', 'bold');
+    doc.text('TAX INVOICE', 195, 25, { align: 'right' });
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(204, 214, 246);
+    doc.text(`ID: ${invId}`, 195, 32, { align: 'right' });
+
+    // Client Details Section (Elegant floating card look)
+    doc.setFillColor(245, 247, 250); // Very light grey blue
+    doc.roundedRect(15, 60, 180, 35, 4, 4, 'F');
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.5);
+    doc.roundedRect(15, 60, 180, 35, 4, 4, 'S');
+
+    doc.setTextColor(15, 23, 42); 
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('BILLED TO', 20, 72);
+    
+    doc.setFontSize(14);
+    doc.setTextColor(10, 25, 47); // Dark navy
+    doc.text(client, 20, 82);
+
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 23, 42);
+    doc.text('INVOICE DATE', 140, 72);
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(10, 25, 47);
+    doc.text(date, 140, 82);
 
     autoTable(doc, {
-      startY: 70,
+      startY: 105,
       head: [['Description', 'Qty', 'Rate', 'Amount']],
       body: items.map(item => {
         const q = parseFloat(item.qty) || 0;
@@ -87,16 +157,26 @@ const InvoiceManagement = ({ initialTab = 'history' }) => {
           `₹${(q * r).toFixed(2)}`
         ];
       }),
-      theme: 'striped',
-      headStyles: { fillColor: [30, 58, 138] }
+      theme: 'grid',
+      headStyles: { fillColor: [10, 25, 47], textColor: 255, fontSize: 11, fontStyle: 'bold' },
+      bodyStyles: { textColor: 50, fontSize: 10 },
+      alternateRowStyles: { fillColor: [248, 250, 252] },
+      styles: { cellPadding: 6 }
     });
 
     const finalY = doc.lastAutoTable.finalY + 10;
+    doc.setFontSize(11);
+    doc.setTextColor(100, 116, 139);
     doc.text(`Subtotal: ₹${subtotal.toFixed(2)}`, 140, finalY);
     doc.text(`Tax (18%): ₹${tax.toFixed(2)}`, 140, finalY + 7);
-    doc.setFontSize(12);
+    
+    // Total section
+    doc.setFillColor(241, 245, 249);
+    doc.roundedRect(125, finalY + 12, 70, 12, 2, 2, 'F');
+    doc.setFontSize(13);
+    doc.setTextColor(10, 25, 47);
     doc.setFont("helvetica", "bold");
-    doc.text(`Total: ₹${total.toFixed(2)}`, 140, finalY + 15);
+    doc.text(`TOTAL: ₹${total.toFixed(2)}`, 130, finalY + 20);
 
     // Provide immediate feedback to user via download
     doc.save(`${invId}_${client}.pdf`);

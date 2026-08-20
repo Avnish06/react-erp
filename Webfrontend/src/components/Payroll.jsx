@@ -7,6 +7,7 @@ import ConfirmModal from './ConfirmModal';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import SalarySlipGenerator from './SalarySlipGenerator';
+import logoImg from '../assets/logo_transparent.png';
 
 const Payroll = ({ initialTab = 'list' }) => {
   const [payrollData, setPayrollData] = useState([]);
@@ -64,43 +65,87 @@ const Payroll = ({ initialTab = 'list' }) => {
     }
   };
 
-  const handleDownload = (record) => {
+  const handleDownload = async (record) => {
+    // Load image as promise
+    const loadImage = (src) => {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'Anonymous';
+        img.onload = () => resolve(img);
+        img.onerror = (e) => reject(e);
+        img.src = src;
+      });
+    };
+
+    let logo = null;
+    try {
+      logo = await loadImage(logoImg);
+    } catch (e) {
+      console.error('Failed to load logo', e);
+    }
+
     const doc = new jsPDF();
-    const companyName = "ERPMaster IT Solutions";
 
-    // Add Header
-    doc.setFontSize(22);
-    doc.setTextColor(30, 58, 138); // Indigo-900
-    doc.text(companyName, 105, 20, { align: 'center' });
+    // Create a stunning, professional cover-like header
+    doc.setFillColor(10, 25, 47); // Dark navy blue
+    doc.rect(0, 0, 210, 50, 'F');
+    doc.setFillColor(0, 212, 255); // Cyan/Bright Blue accent
+    doc.rect(0, 50, 210, 2, 'F');
+    doc.setFillColor(17, 34, 64);
+    doc.triangle(150, 0, 210, 0, 210, 50, 'F');
 
-    doc.setFontSize(16);
-    doc.setTextColor(100);
-    doc.text('Monthly Salary Slip', 105, 30, { align: 'center' });
+    // Logo / Branding Text
+    if (logo) {
+      doc.addImage(logo, 'PNG', 15, 10, 35, 25);
+      doc.setFontSize(22);
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.text('HATBALIYA', 55, 22);
+      doc.setFontSize(12);
+      doc.setTextColor(136, 146, 176); 
+      doc.setFont('helvetica', 'normal');
+      doc.text('TECHNOLOGIES', 55, 28);
+    } else {
+      doc.setFontSize(26);
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.text('HATBALIYA', 20, 25);
+      doc.setFontSize(14);
+      doc.setTextColor(136, 146, 176); 
+      doc.setFont('helvetica', 'normal');
+      doc.text('TECHNOLOGIES', 20, 32);
+    }
 
-    // Employee Details Section
-    doc.setFontSize(12);
-    doc.setTextColor(0);
-    doc.setDrawColor(200);
-    doc.line(20, 35, 190, 35);
+    // Title Tag
+    doc.setFontSize(14);
+    doc.setTextColor(0, 212, 255); // Cyan accent
+    doc.setFont('helvetica', 'bold');
+    doc.text('SALARY SLIP', 195, 25, { align: 'right' });
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(204, 214, 246);
+    doc.text(record.month_year, 195, 32, { align: 'right' });
 
-    doc.setFont("helvetica", "bold");
-    doc.text('Employee Name:', 20, 45);
-    doc.setFont("helvetica", "normal");
-    doc.text(record.employee_name || user.name, 60, 45);
+    // Employee Details Section (Elegant floating card look)
+    doc.setFillColor(245, 247, 250); // Very light grey blue
+    doc.roundedRect(15, 60, 180, 35, 4, 4, 'F');
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.5);
+    doc.roundedRect(15, 60, 180, 35, 4, 4, 'S');
 
-    doc.setFont("helvetica", "bold");
-    doc.text('Month / Year:', 20, 52);
-    doc.setFont("helvetica", "normal");
-    doc.text(record.month_year, 60, 52);
-
-    doc.setFont("helvetica", "bold");
-    doc.text('Payment Date:', 20, 59);
-    doc.setFont("helvetica", "normal");
-    doc.text(new Date(record.payment_date).toLocaleDateString(), 60, 59);
+    doc.setTextColor(15, 23, 42); 
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('EMPLOYEE NAME', 20, 72);
+    
+    doc.setFontSize(14);
+    doc.setTextColor(10, 25, 47); // Dark navy
+    doc.text(record.employee_name || user.name, 20, 82);
 
     // Earnings & Deductions Table
     autoTable(doc, {
-      startY: 70, head: [['Description', 'Earnings', 'Deductions']],
+      startY: 105, 
+      head: [['Description', 'Earnings', 'Deductions']],
       body: [
         ['Basic Salary', `₹${record.basic_salary}`, ''],
         ['HRA', `₹${record.hra}`, ''],
@@ -108,27 +153,34 @@ const Payroll = ({ initialTab = 'list' }) => {
         ['Bonus', `₹${record.bonus}`, ''],
         ['Total Deductions', '', `₹${record.deductions}`],
       ],
-      theme: 'striped',
-      headStyles: { fillColor: [30, 58, 138], textColor: 255 },
-      styles: { cellPadding: 5 }
+      theme: 'grid',
+      headStyles: { fillColor: [10, 25, 47], textColor: 255, fontSize: 11, fontStyle: 'bold' },
+      bodyStyles: { textColor: 50, fontSize: 10 },
+      alternateRowStyles: { fillColor: [248, 250, 252] },
+      styles: { cellPadding: 6 }
     });
 
     // Net Salary Section
-    const finalY = doc.lastAutoTable.finalY + 10;
-    doc.setDrawColor(30, 58, 138);
-    doc.setLineWidth(1);
-    doc.rect(20, finalY, 170, 15);
+    const finalY = doc.lastAutoTable.finalY + 15;
+    doc.setFillColor(241, 245, 249); // slate-100
+    doc.roundedRect(15, finalY, 180, 16, 2, 2, 'F');
+    doc.setDrawColor(10, 25, 47);
+    doc.setLineWidth(0.5);
+    doc.roundedRect(15, finalY, 180, 16, 2, 2, 'S');
 
     doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(15, 23, 42);
+    doc.text('NET SALARY PAYABLE:', 25, finalY + 11);
+    
     doc.setFontSize(14);
-    doc.text('NET SALARY:', 30, finalY + 10);
     doc.setTextColor(22, 163, 74); // Green-600
-    doc.text(`₹${record.net_salary}`, 150, finalY + 10);
+    doc.text(`₹${record.net_salary}`, 150, finalY + 11);
 
     // Footer
-    doc.setFontSize(10);
-    doc.setTextColor(150);
-    doc.text('This is a computer-generated salary slip and does not require a signature.', 105, 280, { align: 'center' });
+    doc.setFontSize(9);
+    doc.setTextColor(148, 163, 184); // slate-400
+    doc.text('This is a computer generated salary slip and does not require a signature.', 105, 280, { align: 'center' });
 
     doc.save(`Salary_Slip_${record.month_year}.pdf`);
     toast.success('Salary slip downloaded');

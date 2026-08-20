@@ -3,6 +3,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { Download, Edit, RefreshCw, Printer, Info, Save } from 'lucide-react';
 import { toast } from 'sonner';
+import logoImg from '../assets/logo_transparent.png';
 
 export default function SalarySlipGenerator({ payroll = null, onClose }) {
   const [slip, setSlip] = useState({
@@ -182,7 +183,7 @@ export default function SalarySlipGenerator({ payroll = null, onClose }) {
           <div className="flex justify-between items-start border-b border-gray-100 pb-6 mb-6">
             <div className="space-y-2">
               <div className="flex items-center gap-3">
-                <img src="/image.png" alt="Company Logo" className="h-10 object-contain" />
+                <img src={logoImg} alt="Company Logo" className="h-10 object-contain" />
                 <span className="text-xl font-black tracking-tight text-orange-950">HATBALIYA <span className="text-orange-600 font-bold">TECHNOLOGIES</span></span>
               </div>
               <p className="text-[10px] text-gray-400 font-semibold italic -mt-1">{slip.tagline}</p>

@@ -4,6 +4,7 @@ import { FileText, Download, Search, Filter, Calendar, Plus, BarChart3 } from 'l
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import logoImg from '../assets/logo_transparent.png';
 
 const ReportHistory = () => {
   const [reports, setReports] = useState([]);
@@ -47,37 +48,111 @@ const ReportHistory = () => {
     }
   };
 
-  const handleDownload = (report) => {
+  const handleDownload = async (report) => {
+    // Load image as promise
+    const loadImage = (src) => {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'Anonymous';
+        img.onload = () => resolve(img);
+        img.onerror = (e) => reject(e);
+        img.src = src;
+      });
+    };
+
+    let logo = null;
+    try {
+      logo = await loadImage(logoImg);
+    } catch (e) {
+      console.error('Failed to load logo', e);
+    }
+
     const doc = new jsPDF();
-    doc.setFontSize(22);
-    doc.setTextColor(30, 58, 138);
-    doc.text('ERPMaster IT Solutions', 105, 20, { align: 'center' });
+    
+    // Create a stunning, professional cover-like header
+    doc.setFillColor(10, 25, 47); // Dark navy blue
+    doc.rect(0, 0, 210, 50, 'F');
+    doc.setFillColor(0, 212, 255); // Cyan/Bright Blue accent
+    doc.rect(0, 50, 210, 2, 'F');
+    doc.setFillColor(17, 34, 64);
+    doc.triangle(150, 0, 210, 0, 210, 50, 'F');
 
-    doc.setFontSize(16);
-    doc.setTextColor(100);
-    doc.text(report.title, 105, 30, { align: 'center' });
+    // Logo / Branding Text
+    if (logo) {
+      doc.addImage(logo, 'PNG', 15, 10, 35, 25);
+      doc.setFontSize(22);
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.text('HATBALIYA', 55, 22);
+      doc.setFontSize(12);
+      doc.setTextColor(136, 146, 176); 
+      doc.setFont('helvetica', 'normal');
+      doc.text('TECHNOLOGIES', 55, 28);
+    } else {
+      doc.setFontSize(26);
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.text('HATBALIYA', 20, 25);
+      doc.setFontSize(14);
+      doc.setTextColor(136, 146, 176); 
+      doc.setFont('helvetica', 'normal');
+      doc.text('TECHNOLOGIES', 20, 32);
+    }
 
-    doc.setFontSize(10);
-    doc.setTextColor(0);
-    doc.text(`Generated Date: ${new Date(report.created_at).toLocaleDateString()}`, 20, 45);
-    doc.text(`Type: ${report.type}`, 20, 52);
+    // Title Tag
+    doc.setFontSize(14);
+    doc.setTextColor(0, 212, 255); // Cyan accent
+    doc.setFont('helvetica', 'bold');
+    doc.text('FINANCIAL REPORT', 195, 25, { align: 'right' });
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(204, 214, 246);
+    doc.text(`Type: ${report.type}`, 195, 32, { align: 'right' });
+
+    // Report Details Section (Elegant floating card look)
+    doc.setFillColor(245, 247, 250); // Very light grey blue
+    doc.roundedRect(15, 60, 180, 25, 4, 4, 'F');
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.5);
+    doc.roundedRect(15, 60, 180, 25, 4, 4, 'S');
+
+    doc.setTextColor(15, 23, 42); 
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('REPORT TITLE', 20, 72);
+    
+    doc.setFontSize(14);
+    doc.setTextColor(10, 25, 47); // Dark navy
+    doc.text(report.title, 20, 80);
+
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 23, 42);
+    doc.text('GENERATION DATE', 140, 72);
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(10, 25, 47);
+    doc.text(new Date(report.created_at).toLocaleDateString(), 140, 80);
 
     autoTable(doc, {
-      startY: 65,
+      startY: 95,
       head: [['Category', 'Details', 'Amount']],
       body: [
-        ['Salary Expenditure', 'Total net salaries paid', `$${Number(report.total_salary).toFixed(2)}`],
-        ['General Expenditures', 'Miscellaneous business costs', `$${Number(report.total_expenditure || 0).toFixed(2)}`],
-        ['Client Revenue', 'Total billed to clients (from invoices)', `$${Number(report.total_invoices).toFixed(2)}`],
-        ['Net Balance', 'Revenue - (Salary + Expenditures)', `$${(Number(report.total_invoices) - (Number(report.total_salary) + Number(report.total_expenditure || 0))).toFixed(2)}`],
+        ['Salary Expenditure', 'Total net salaries paid', `₹${Number(report.total_salary).toFixed(2)}`],
+        ['General Expenditures', 'Miscellaneous business costs', `₹${Number(report.total_expenditure || 0).toFixed(2)}`],
+        ['Client Revenue', 'Total billed to clients (from invoices)', `₹${Number(report.total_invoices).toFixed(2)}`],
+        ['Net Balance', 'Revenue - (Salary + Expenditures)', `₹${(Number(report.total_invoices) - (Number(report.total_salary) + Number(report.total_expenditure || 0))).toFixed(2)}`],
       ],
       theme: 'grid',
-      headStyles: { fillColor: [30, 58, 138], textColor: 255 },
+      headStyles: { fillColor: [10, 25, 47], textColor: 255, fontSize: 11, fontStyle: 'bold' },
+      bodyStyles: { textColor: 50, fontSize: 10 },
+      alternateRowStyles: { fillColor: [248, 250, 252] },
+      styles: { cellPadding: 6 }
     });
 
-    doc.setFontSize(10);
-    doc.setTextColor(150);
-    doc.text('Confidential Financial Report - FOR INTERNAL USE ONLY', 105, 285, { align: 'center' });
+    doc.setFontSize(9);
+    doc.setTextColor(148, 163, 184); // slate-400
+    doc.text('Confidential Financial Report - FOR INTERNAL USE ONLY', 105, 280, { align: 'center' });
 
     doc.save(`${report.title.replace(/\s+/g, '_')}.pdf`);
     toast.success('Report downloaded');
