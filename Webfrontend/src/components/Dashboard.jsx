@@ -2176,6 +2176,7 @@ function PageHeader({ title }) {
 function DashboardStats({ stats, onNavigate }) {
   const userStats = JSON.parse(localStorage.getItem('user')) || {};
   const isSuperAdminStat = userStats?.role === 'Super Admin';
+  const [isEditingExec, setIsEditingExec] = useState(false);
   const [execData, setExecData] = useState(() => {
     return JSON.parse(localStorage.getItem('execDashboardData')) || {
       totalEmployees: stats?.totalEmployees ?? 0,
