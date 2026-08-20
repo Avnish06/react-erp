@@ -96,6 +96,33 @@ router.put('/:id', (req, res) => {
       const newDesc = `Payroll for ${month_year} (User ${user_id || old_user_id})`;
       db.query('UPDATE finance_transactions SET amount=?, amount_base=?, description=? WHERE description=?', [net_salary, net_salary, newDesc, oldDesc]);
       
+      // --- Sync update to Colovo Workspace ---
+      db.query(`SELECT ui.email FROM user_identities ui WHERE ui.id = ? LIMIT 1`, [user_id || old_user_id], async (emailErr, emailRows) => {
+        if (!emailErr && emailRows.length > 0) {
+          try {
+            const employeeEmail = emailRows[0].email;
+            const colovoDb = require('../config/db').colovoPromise;
+            const [colovoUsers] = await colovoDb.query('SELECT id FROM users WHERE email = ?', [employeeEmail]);
+            if (colovoUsers.length > 0) {
+              const colovoUserId = colovoUsers[0].id;
+              await colovoDb.query(
+                'UPDATE payrolls SET salary = ?, bonus = ?, deductions = ?, net_salary = ?, month = ?, updated_at = NOW() WHERE user_id = ? AND month = ?',
+                [basic_salary, bonus, deductions, net_salary, month_year, colovoUserId, old_month_year]
+              ).catch(async () => {
+                // fallback if table is named payroll
+                await colovoDb.query(
+                  'UPDATE payroll SET salary = ?, bonus = ?, deductions = ?, net_salary = ?, month = ?, updated_at = NOW() WHERE user_id = ? AND month = ?',
+                  [basic_salary, bonus, deductions, net_salary, month_year, colovoUserId, old_month_year]
+                );
+              });
+            }
+          } catch (syncErr) {
+            console.error('[Payroll Sync Error] Failed to update payslip in Colovo:', syncErr.message);
+          }
+        }
+      });
+      // -----------------------------------------
+
       res.json({ success: true, message: 'Payroll updated successfully' });
     });
   });
@@ -115,6 +142,32 @@ router.delete('/:id', (req, res) => {
       const desc = `Payroll for ${month_year} (User ${user_id})`;
       db.query('DELETE FROM finance_transactions WHERE description=?', [desc]);
       
+      // --- Sync delete to Colovo Workspace ---
+      db.query(`SELECT ui.email FROM user_identities ui WHERE ui.id = ? LIMIT 1`, [user_id], async (emailErr, emailRows) => {
+        if (!emailErr && emailRows.length > 0) {
+          try {
+            const employeeEmail = emailRows[0].email;
+            const colovoDb = require('../config/db').colovoPromise;
+            const [colovoUsers] = await colovoDb.query('SELECT id FROM users WHERE email = ?', [employeeEmail]);
+            if (colovoUsers.length > 0) {
+              const colovoUserId = colovoUsers[0].id;
+              await colovoDb.query(
+                'DELETE FROM payrolls WHERE user_id = ? AND month = ?',
+                [colovoUserId, month_year]
+              ).catch(async () => {
+                await colovoDb.query(
+                  'DELETE FROM payroll WHERE user_id = ? AND month = ?',
+                  [colovoUserId, month_year]
+                );
+              });
+            }
+          } catch (syncErr) {
+            console.error('[Payroll Sync Error] Failed to delete payslip in Colovo:', syncErr.message);
+          }
+        }
+      });
+      // -----------------------------------------
+
       res.json({ success: true, message: 'Payroll deleted successfully' });
     });
   });
