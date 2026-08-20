@@ -83,16 +83,7 @@ async function sendAttendanceNotification(user_id, date, status, reason, trigger
   }
 }
 
-// Get Attendance for a user
-router.get('/:userId', verifyToken, (req, res) => {
-  const userId = req.params.userId;
-  const query = 'SELECT * FROM attendance WHERE user_id = ? ORDER BY date DESC, clock_in DESC';
-  
-  db.query(query, [userId], (err, results) => {
-    if (err) return res.status(500).json({ success: false, message: 'Server error' });
-    res.json({ success: true, data: results });
-  });
-});
+
 
 // Clock In
 router.post('/clock-in', verifyToken, (req, res) => {
@@ -132,11 +123,32 @@ router.post('/clock-in', verifyToken, (req, res) => {
     }
 
     const query = 'INSERT INTO attendance (user_id, employee_name, date, clock_in, image_url, status) VALUES (?, ?, ?, ?, ?, "Present")';
-    db.query(query, [user_id, employee_name, date, clock_in, imageUrl], (err, result) => {
+    db.query(query, [user_id, employee_name, date, clock_in, imageUrl], async (err, result) => {
       if (err) {
         console.error('Database Error during clock-in:', err);
         return res.status(500).json({ success: false, message: 'Database error: ' + err.message });
       }
+
+      // Sync to Colovo Database
+      try {
+        const [userRows] = await db.promise().query('SELECT email FROM users WHERE id = ?', [user_id]);
+        if (userRows.length > 0) {
+          const email = userRows[0].email;
+          const colovoDb = require('../config/db').colovoPromise;
+          const [colovoUsers] = await colovoDb.query('SELECT id FROM users WHERE email = ?', [email]);
+          if (colovoUsers.length > 0) {
+            const colovoUserId = colovoUsers[0].id;
+            await colovoDb.query(
+              'INSERT INTO attendances (user_id, date, clock_in, check_in_photo, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NOW(), NOW())',
+              [colovoUserId, date, clock_in, imageUrl, 'present']
+            );
+            console.log('[Workspace Sync] Clock-in synced to Colovo user ID:', colovoUserId);
+          }
+        }
+      } catch (syncErr) {
+        console.error('[Workspace Sync Error] Failed to sync clock-in:', syncErr.message);
+      }
+
       res.json({ success: true, message: 'Clocked in successfully', id: result.insertId });
     });
   });
@@ -174,8 +186,29 @@ router.post('/clock-out', verifyToken, (req, res) => {
   }
 
   const query = 'UPDATE attendance SET clock_out = ?, clock_out_image_url = ? WHERE user_id = ? AND date = ?';
-  db.query(query, [clock_out, imageUrl, user_id, date], (err) => {
+  db.query(query, [clock_out, imageUrl, user_id, date], async (err) => {
     if (err) return res.status(500).json({ success: false, message: 'Error clocking out' });
+
+    // Sync to Colovo Database
+    try {
+      const [userRows] = await db.promise().query('SELECT email FROM users WHERE id = ?', [user_id]);
+      if (userRows.length > 0) {
+        const email = userRows[0].email;
+        const colovoDb = require('../config/db').colovoPromise;
+        const [colovoUsers] = await colovoDb.query('SELECT id FROM users WHERE email = ?', [email]);
+        if (colovoUsers.length > 0) {
+          const colovoUserId = colovoUsers[0].id;
+          await colovoDb.query(
+            'UPDATE attendances SET clock_out = ?, check_out_photo = ?, updated_at = NOW() WHERE user_id = ? AND date = ?',
+            [clock_out, imageUrl, colovoUserId, date]
+          );
+          console.log('[Workspace Sync] Clock-out synced to Colovo user ID:', colovoUserId);
+        }
+      }
+    } catch (syncErr) {
+      console.error('[Workspace Sync Error] Failed to sync clock-out:', syncErr.message);
+    }
+
     res.json({ success: true, message: 'Clocked out successfully' });
   });
 });
