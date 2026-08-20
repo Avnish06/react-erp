@@ -47,8 +47,17 @@ router.post('/login', async (req, res) => {
            return res.status(403).json({ success: false, message: 'Portal access is disabled for this account.' });
         }
         
-        // Very basic password check for clients (ideally use bcrypt here too, assuming plain text or 'password123' for now)
-        if (password !== client.password && password !== 'password123') {
+        // Use bcrypt to compare password, fallback to plain text check for legacy accounts
+        const isBcryptHash = client.password && (client.password.startsWith('$2a$') || client.password.startsWith('$2b$'));
+        let isClientValid = false;
+        
+        if (isBcryptHash) {
+          isClientValid = await bcrypt.compare(password, client.password);
+        } else {
+          isClientValid = (password === client.password);
+        }
+
+        if (!isClientValid) {
            return res.status(401).json({ success: false, message: 'Invalid credentials' });
         }
 

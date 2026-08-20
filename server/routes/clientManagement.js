@@ -6,6 +6,7 @@ const { sendClientOnboardingEmail, sendProposalEmail } = require('../utils/maile
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const bcrypt = require('bcryptjs');
 
 // Configure Multer for PDF Uploads
 const storage = multer.diskStorage({
@@ -169,15 +170,17 @@ router.post('/contracts', verifyToken, (req, res) => {
 
 // @route   POST /api/client-management/onboard
 // @desc    Convert lead into a new customer (Onboarding wizard)
-router.post('/onboard', verifyToken, (req, res) => {
+router.post('/onboard', verifyToken, async (req, res) => {
   const { lead_id, company_name, email, phone, contact_person, requirements } = req.body;
   const created_by = req.user.id;
   const generatedPassword = `Pass${Math.floor(1000 + Math.random() * 9000)}!`;
   const name = contact_person || company_name;
   
+  const hashedPassword = await bcrypt.hash(generatedPassword, 10);
+  
   db.query(
     'INSERT INTO customers (name, company_name, email, phone, requirements, assigned_to, stage, health_score, portal_access_enabled, password) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    [name, company_name, email, phone, requirements, created_by, 'Active', 100, true, generatedPassword],
+    [name, company_name, email, phone, requirements, created_by, 'Active', 100, true, hashedPassword],
     async (err, result) => {
       if (err) return res.status(500).json({ success: false, message: 'Database error', error: err.message });
       
@@ -201,9 +204,11 @@ router.post('/onboard', verifyToken, (req, res) => {
 // @desc    Client or Admin signs a contract
 router.put('/contracts/:id/sign', verifyToken, (req, res) => {
   const contractId = req.params.id;
-  const { signature, role } = req.body;
+  const { signature } = req.body;
   
-  let updateField = role === 'admin' ? 'admin_signature' : 'client_signature';
+  const userRole = req.user.role;
+  const isAdmin = userRole === 'Admin' || userRole === 'Super Admin' || userRole === 'Developer';
+  let updateField = isAdmin ? 'admin_signature' : 'client_signature';
   
   db.query(
     `UPDATE contracts SET ${updateField} = ?, status = 'Signed' WHERE id = ?`,
