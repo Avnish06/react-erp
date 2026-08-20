@@ -43,6 +43,19 @@ const Announcements = () => {
     }
   };
 
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this announcement?')) return;
+    try {
+      const res = await axios.delete(`/api/notifications/announcements/${id}`);
+      if (res.data.success) {
+        toast.success('Announcement deleted');
+        fetchAnnouncements();
+      }
+    } catch (err) {
+      toast.error('Error deleting announcement');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 flex-wrap">
@@ -84,6 +97,15 @@ const Announcements = () => {
                     </div>
                   </div>
                 </div>
+                {isAdmin && (
+                  <button 
+                    onClick={() => handleDelete(ann.id)} 
+                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    title="Delete Announcement"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                )}
               </div>
               <p className="text-slate-600 text-left leading-relaxed whitespace-pre-wrap">{ann.content}</p>
             </div>

@@ -78,6 +78,15 @@ router.get('/announcements', verifyToken, (req, res) => {
   });
 });
 
+// Delete Announcement (Admin/Super Admin/Developer)
+router.delete('/announcements/:id', verifyToken, (req, res) => {
+  const query = 'DELETE FROM announcements WHERE id = ?';
+  db.query(query, [req.params.id], (err, result) => {
+    if (err) return res.status(500).json({ success: false, message: 'Error deleting announcement' });
+    res.json({ success: true, message: 'Announcement deleted successfully' });
+  });
+});
+
 // Send Notification to specific user
 router.post('/send', verifyToken, (req, res) => {
   const { user_id, title, message, type } = req.body;
