@@ -2176,17 +2176,30 @@ function PageHeader({ title }) {
 function DashboardStats({ stats, onNavigate }) {
   const userStats = JSON.parse(localStorage.getItem('user')) || {};
   const isSuperAdminStat = userStats?.role === 'Super Admin';
-  const [isEditingExec, setIsEditingExec] = useState(false);
   const [execData, setExecData] = useState(() => {
     return JSON.parse(localStorage.getItem('execDashboardData')) || {
       totalEmployees: stats?.totalEmployees ?? 0,
       activeProjects: stats?.activeProjects ?? 0,
       totalLeads: '1,250',
       pipelineValue: '2.45M',
-      monthlyRevenue: stats?.revenueTotal ? (stats.revenueTotal / 83).toLocaleString(undefined, { maximumFractionDigits: 0 }) : '850K',
-      profitYTD: '210K'
+      monthlyRevenue: stats?.monthlyRevenue != null ? stats.monthlyRevenue.toLocaleString() : '850,000',
+      totalExpenses: stats?.totalExpensesYTD != null ? stats.totalExpensesYTD.toLocaleString() : '640,000',
+      profitYTD: stats?.profitYTD != null ? stats.profitYTD.toLocaleString() : '210,000'
     };
   });
+
+  useEffect(() => {
+    if (stats && !isEditingExec) {
+      setExecData(prev => ({
+        ...prev,
+        totalEmployees: stats.totalEmployees ?? prev.totalEmployees,
+        activeProjects: stats.activeProjects ?? prev.activeProjects,
+        monthlyRevenue: stats.monthlyRevenue != null ? stats.monthlyRevenue.toLocaleString() : prev.monthlyRevenue,
+        totalExpenses: stats.totalExpensesYTD != null ? stats.totalExpensesYTD.toLocaleString() : prev.totalExpenses,
+        profitYTD: stats.profitYTD != null ? stats.profitYTD.toLocaleString() : prev.profitYTD
+      }));
+    }
+  }, [stats, isEditingExec]);
 
   const handleSaveExec = (e) => {
     e.preventDefault();
@@ -2230,6 +2243,10 @@ function DashboardStats({ stats, onNavigate }) {
               <div>
                 <label className="block text-xs font-semibold text-gray-400 mb-1">Monthly Revenue (₹)</label>
                 <input type="text" className="w-full bg-[#1a2c5b] border border-orange-400/20 rounded p-2 text-white" value={execData.monthlyRevenue} onChange={(e) => handleChangeExec('monthlyRevenue', e.target.value)} />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-400 mb-1">Total Expenses YTD (₹)</label>
+                <input type="text" className="w-full bg-[#1a2c5b] border border-orange-400/20 rounded p-2 text-white" value={execData.totalExpenses || ''} onChange={(e) => handleChangeExec('totalExpenses', e.target.value)} />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-400 mb-1">Profit YTD (₹)</label>
@@ -2279,7 +2296,7 @@ function DashboardStats({ stats, onNavigate }) {
               </button>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
               {/* Total Employees */}
               <div className="space-y-3 cursor-default bg-[#132345] p-4 lg:p-5 rounded-2xl border border-orange-400/10 shadow-lg min-w-0">
                 <div className="flex items-start gap-2 text-[#6e8ba6]">
@@ -2328,6 +2345,18 @@ function DashboardStats({ stats, onNavigate }) {
                 </div>
               </div>
 
+              {/* Total Expenses (YTD) */}
+              <div className="space-y-3 cursor-default bg-[#132345] p-4 lg:p-5 rounded-2xl border border-orange-400/10 shadow-lg min-w-0">
+                <div className="flex items-start gap-2 text-[#6e8ba6]">
+                  <TrendingDown size={16} strokeWidth={1.5} className="mt-0.5 min-w-[16px] text-red-400" />
+                  <span className="text-[10px] font-bold uppercase tracking-wider leading-tight text-red-400/90">TOTAL<br />EXPENSES</span>
+                </div>
+                <p className="text-xl md:text-2xl 2xl:text-3xl font-extrabold tracking-tight text-white leading-none whitespace-nowrap overflow-hidden text-ellipsis">₹{execData.totalExpenses}</p>
+                <div className="inline-flex items-center gap-1.5 text-[10px] text-[#f43f5e] font-semibold bg-[#3d0c18] px-2 py-1.5 rounded-lg w-max max-w-full">
+                  <Activity size={12} strokeWidth={2} className="min-w-[12px]" /> <span className="whitespace-nowrap overflow-hidden text-ellipsis">Live Data</span>
+                </div>
+              </div>
+
               {/* Profit (YTD) */}
               <div className="space-y-3 cursor-default bg-[#132345] p-4 lg:p-5 rounded-2xl border border-orange-400/10 shadow-lg min-w-0">
                 <div className="flex items-start gap-2 text-[#6e8ba6]">
@@ -2336,7 +2365,7 @@ function DashboardStats({ stats, onNavigate }) {
                 </div>
                 <p className="text-xl md:text-2xl 2xl:text-3xl font-extrabold tracking-tight text-white leading-none whitespace-nowrap overflow-hidden text-ellipsis">₹{execData.profitYTD}</p>
                 <div className="inline-flex items-center gap-1.5 text-[10px] text-[#13a886] font-semibold bg-[#0c2e3d] px-2 py-1.5 rounded-lg w-max max-w-full">
-                  <TrendingUp size={12} strokeWidth={2} className="min-w-[12px]" /> <span className="whitespace-nowrap overflow-hidden text-ellipsis">14% vs last month</span>
+                  <TrendingUp size={12} strokeWidth={2} className="min-w-[12px]" /> <span className="whitespace-nowrap overflow-hidden text-ellipsis">Real-time Margin</span>
                 </div>
               </div>
             </div>

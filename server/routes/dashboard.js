@@ -12,7 +12,21 @@ router.get('/stats', verifyToken, (req, res) => {
     pendingLeaves: "SELECT COUNT(*) as count FROM leave_requests WHERE status = 'Pending'",
     activeProjects: "SELECT COUNT(*) as count FROM projects WHERE status = 'Ongoing'",
     payrollTotal: "SELECT SUM(net_salary) as total FROM payroll",
-    unreadCount: "SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = FALSE"
+    unreadCount: "SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = FALSE",
+    financeStatsYTD: `
+      SELECT 
+        COALESCE(SUM(CASE WHEN type = 'revenue' THEN amount_base ELSE 0 END), 0) as totalRevenue,
+        COALESCE(SUM(CASE WHEN type = 'expense' THEN amount_base ELSE 0 END), 0) as totalExpenses
+      FROM finance_transactions
+      WHERE YEAR(date) = YEAR(CURRENT_DATE())
+    `,
+    monthlyRevenue: `
+      SELECT COALESCE(SUM(amount_base), 0) as total 
+      FROM finance_transactions 
+      WHERE type = 'revenue' 
+      AND MONTH(date) = MONTH(CURRENT_DATE()) 
+      AND YEAR(date) = YEAR(CURRENT_DATE())
+    `
   };
 
   const executeQuery = (query, params = []) => {
@@ -31,9 +45,11 @@ router.get('/stats', verifyToken, (req, res) => {
     executeQuery(queries.pendingLeaves),
     executeQuery(queries.activeProjects),
     executeQuery(queries.payrollTotal),
-    executeQuery(queries.unreadCount, [req.user.id])
+    executeQuery(queries.unreadCount, [req.user.id]),
+    executeQuery(queries.financeStatsYTD),
+    executeQuery(queries.monthlyRevenue)
   ])
-    .then(([employees, admins, departments, leaves, projects, payroll, notifs]) => {
+    .then(([employees, admins, departments, leaves, projects, payroll, notifs, finance, monthlyRev]) => {
       res.json({
         success: true,
         data: {
@@ -43,7 +59,11 @@ router.get('/stats', verifyToken, (req, res) => {
           pendingLeaves: leaves.count,
           activeProjects: projects.count,
           payrollTotal: payroll.total || 0,
-          unreadCount: notifs.count
+          unreadCount: notifs.count,
+          totalRevenueYTD: parseFloat(finance.totalRevenue) || 0,
+          totalExpensesYTD: parseFloat(finance.totalExpenses) || 0,
+          profitYTD: (parseFloat(finance.totalRevenue) || 0) - (parseFloat(finance.totalExpenses) || 0),
+          monthlyRevenue: parseFloat(monthlyRev.total) || 0
         }
       });
     })
