@@ -13,18 +13,31 @@ const SignaturePad = ({ onSign, onCancel }) => {
       canvas.width = 400;
       canvas.height = 200;
       const ctx = canvas.getContext('2d');
+      
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
       ctx.lineWidth = 2;
       ctx.lineCap = 'round';
       ctx.strokeStyle = '#0f172a';
     }
   }, []);
 
+  const getCoordinates = (e) => {
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    return {
+      x: clientX - rect.left,
+      y: clientY - rect.top
+    };
+  };
+
   const startDrawing = (e) => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const { x, y } = getCoordinates(e);
     
     ctx.beginPath();
     ctx.moveTo(x, y);
@@ -35,9 +48,7 @@ const SignaturePad = ({ onSign, onCancel }) => {
     if (!isDrawing) return;
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const { x, y } = getCoordinates(e);
     
     ctx.lineTo(x, y);
     ctx.stroke();
@@ -50,7 +61,8 @@ const SignaturePad = ({ onSign, onCancel }) => {
   const clearCanvas = () => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
   };
 
   const saveSignature = () => {
@@ -60,6 +72,10 @@ const SignaturePad = ({ onSign, onCancel }) => {
     const blank = document.createElement('canvas');
     blank.width = canvas.width;
     blank.height = canvas.height;
+    const blankCtx = blank.getContext('2d');
+    blankCtx.fillStyle = '#ffffff';
+    blankCtx.fillRect(0, 0, blank.width, blank.height);
+    
     if (dataUrl === blank.toDataURL('image/png')) {
       toast.error("Please provide a signature");
       return;
@@ -83,6 +99,9 @@ const SignaturePad = ({ onSign, onCancel }) => {
               onMouseMove={draw}
               onMouseUp={stopDrawing}
               onMouseLeave={stopDrawing}
+              onTouchStart={startDrawing}
+              onTouchMove={draw}
+              onTouchEnd={stopDrawing}
               className="cursor-crosshair bg-white touch-none"
               style={{ width: '400px', height: '200px' }}
             />
