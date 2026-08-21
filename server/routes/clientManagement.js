@@ -220,6 +220,38 @@ router.put('/contracts/:id/sign', verifyToken, (req, res) => {
   );
 });
 
+// @route   GET /api/client-management/fix-db
+// @desc    One-time fix to add signature columns to proposals table
+router.get('/fix-db', (req, res) => {
+  const queries = [
+    'ALTER TABLE proposals ADD COLUMN client_signature LONGTEXT;',
+    'ALTER TABLE proposals ADD COLUMN admin_signature LONGTEXT;',
+    'ALTER TABLE proposals ADD COLUMN client_signed_at TIMESTAMP;',
+    'ALTER TABLE proposals ADD COLUMN admin_signed_at TIMESTAMP;',
+    'ALTER TABLE proposals MODIFY COLUMN client_signature LONGTEXT;',
+    'ALTER TABLE proposals MODIFY COLUMN admin_signature LONGTEXT;'
+  ];
+
+  let completed = 0;
+  let errors = [];
+
+  for (const q of queries) {
+    db.query(q, (err) => {
+      if (err && err.code !== 'ER_DUP_FIELDNAME') {
+        errors.push(err.message);
+      }
+      completed++;
+      if (completed === queries.length) {
+        if (errors.length > 0) {
+          res.json({ success: false, message: 'Some errors occurred', errors });
+        } else {
+          res.json({ success: true, message: 'Database schema fixed successfully! You can now sign documents.' });
+        }
+      }
+    });
+  }
+});
+
 // @route   GET /api/client-management/health
 // @desc    Calculate health score logic (Mock API for Customer 360)
 router.get('/health', verifyToken, (req, res) => {
