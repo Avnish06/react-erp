@@ -136,19 +136,31 @@ export default function SalarySlipGenerator({ payroll = null, onClose }) {
     const iframeDoc = iframe.contentWindow.document;
     iframeDoc.open();
     iframeDoc.write(`
-      <html>
+      <html class="light" style="color-scheme: light !important;">
         <head>
           <title>Salary_Slip_${slip.employeeName.replace(/\s+/g, '_')}_${slip.monthYear}</title>
           ${styles}
           <style>
+            :root {
+              color-scheme: light !important;
+            }
             @media print {
-              body { -webkit-print-color-adjust: exact; print-color-adjust: exact; margin: 0; padding: 20px; }
+              *, ::before, ::after {
+                -webkit-print-color-adjust: exact !important; 
+                print-color-adjust: exact !important;
+              }
+              html, body {
+                background-color: #ffffff !important;
+                color: #0f172a !important;
+              }
               @page { size: A4 portrait; margin: 0; }
             }
           </style>
         </head>
-        <body style="background: white;">
-          ${content.outerHTML}
+        <body style="background: white !important; margin: 0;">
+          <div style="background-color: white;">
+            ${content.outerHTML}
+          </div>
         </body>
       </html>
     `);
