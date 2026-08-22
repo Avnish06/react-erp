@@ -32,7 +32,7 @@ router.get('/', verifyToken, (req, res) => {
 });
 
 // POST /api/invoices - Create new invoice
-router.post('/', verifyToken, checkPermission('manage_payroll'), upload.single('invoice_pdf'), (req, res) => {
+router.post('/', verifyToken, upload.single('invoice_pdf'), (req, res) => {
   const { id, client_name, client_email, total_amount, invoice_date, currency, is_recurring } = req.body;
   const items = req.body.items ? JSON.parse(req.body.items) : [];
   const pdf_url = req.file ? `/uploads/invoices/${req.file.filename}` : null;
