@@ -348,15 +348,34 @@ router.delete('/:id', verifyToken, checkPermission('manage_users'), async (req, 
       
       // 2. Delete from Colovo Workspace DB
       try {
-        await colovoDb.query('DELETE FROM users WHERE email = ?', [email]);
-        console.log(`[Workspace Sync] Deleted user ${email} from Colovo DB.`);
+        const colovoConn = await colovoDb.getConnection();
+        try {
+          await colovoConn.query('SET FOREIGN_KEY_CHECKS=0');
+          await colovoConn.query('DELETE FROM users WHERE email = ?', [email]);
+        } finally {
+          await colovoConn.query('SET FOREIGN_KEY_CHECKS=1');
+          colovoConn.release();
+        }
+        console.log(`[Workspace Sync] Force deleted user ${email} from Colovo DB.`);
       } catch (colovoErr) {
         console.error(`[Workspace Sync Error] Failed to delete user ${email} from Colovo DB:`, colovoErr.message);
       }
     }
 
-    // 3. Delete from local ERP (cascading deletes handle profile tables)
-    await db.promise().query('DELETE FROM user_identities WHERE id = ?', [userId]);
+    // 3. Delete from local ERP (Force delete ignoring FKs just in case)
+    const dbConn = await db.promise().getConnection();
+    try {
+      await dbConn.query('SET FOREIGN_KEY_CHECKS=0');
+      // Also delete from profile tables so they don't linger
+      await dbConn.query('DELETE FROM employees WHERE user_id = ?', [userId]);
+      await dbConn.query('DELETE FROM admins WHERE user_id = ?', [userId]);
+      await dbConn.query('DELETE FROM superadmins WHERE user_id = ?', [userId]);
+      await dbConn.query('DELETE FROM developers WHERE user_id = ?', [userId]);
+      await dbConn.query('DELETE FROM user_identities WHERE id = ?', [userId]);
+    } finally {
+      await dbConn.query('SET FOREIGN_KEY_CHECKS=1');
+      dbConn.release();
+    }
     
     res.json({ success: true, message: 'User and linked profiles deleted successfully from ERP and Workspace' });
   } catch (err) {
