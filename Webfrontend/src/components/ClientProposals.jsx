@@ -168,185 +168,207 @@ const ClientProposals = () => {
 
     const doc = new jsPDF();
     
-    // Create a pristine, highly professional corporate proposal layout
-    // Top Accent Line
-    doc.setFillColor(30, 64, 175); // Corporate Blue Accent
-    doc.rect(0, 0, 210, 8, 'F');
+    // --- NEW BUSINESS PROPOSAL TEMPLATE ---
+    // Pure white background default
     
-    // Logo & Header
+    // Header
     if (logo) {
-      doc.addImage(logo, 'PNG', 15, 15, 45, 18); // Logo prominently placed
+      doc.addImage(logo, 'PNG', 15, 15, 45, 18);
     } else {
-      doc.setFontSize(24);
-      doc.setTextColor(30, 64, 175);
+      doc.setFontSize(20);
+      doc.setTextColor(31, 41, 55);
       doc.setFont('helvetica', 'bold');
       doc.text('Hatbaliya Technologies', 15, 25);
     }
-    
-    // Proposal Title
-    doc.setFontSize(26);
-    doc.setTextColor(75, 85, 99); // Slate 600
-    doc.setFont('helvetica', 'normal');
-    doc.text('PROPOSAL', 195, 28, { align: 'right' });
-    
-    // Header divider line
-    doc.setDrawColor(229, 231, 235); // Gray 200
-    doc.setLineWidth(0.5);
-    doc.line(15, 40, 195, 40);
 
-    // Meta Information
-    doc.setFontSize(10);
-    doc.setTextColor(107, 114, 128); // Gray 500
+    doc.setFontSize(22);
+    doc.setTextColor(17, 24, 39);
     doc.setFont('helvetica', 'bold');
+    doc.text('BUSINESS PROPOSAL', 195, 22, { align: 'right' });
     
-    // Prepared By
-    doc.text('PREPARED BY', 15, 50);
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(31, 41, 55); // Gray 800
-    doc.text('Hatbaliya Technologies', 15, 56);
-    doc.setTextColor(75, 85, 99); // Gray 600
-    doc.text('A-Block, Sector-63, Noida\ninfo@hatbaliyatechnologies.com\nwww.hatbaliyatechnologies.com', 15, 62);
+    doc.setTextColor(75, 85, 99);
+    doc.text(`Proposal ID: [HT-PR-2026-${String(p.id).padStart(3, '0')}]`, 195, 28, { align: 'right' });
+    doc.text(`Date: [${new Date(p.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}]`, 195, 33, { align: 'right' });
+    doc.text(`Validity: [30 Days]`, 195, 38, { align: 'right' });
+    
+    doc.setDrawColor(229, 231, 235);
+    doc.setLineWidth(0.5);
+    doc.line(15, 43, 195, 43);
+
+    // 1. Executive & Project Overview
+    doc.setFontSize(12);
+    doc.setTextColor(17, 24, 39);
+    doc.setFont('helvetica', 'bold');
+    doc.text('1. Executive & Project Overview', 15, 52);
+
+    doc.setFontSize(10);
+    doc.setTextColor(55, 65, 81);
     
     // Prepared For
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(107, 114, 128);
-    doc.text('PREPARED FOR', 95, 50);
+    doc.text('Prepared For:', 15, 60);
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(31, 41, 55);
-    doc.text(p.client_name, 95, 56);
-    doc.setTextColor(75, 85, 99);
-    if (p.client_email) {
-      doc.text(p.client_email, 95, 62);
-    }
+    doc.text(`Client Name / Company: [${p.client_name}]`, 15, 65);
+    doc.text(`Kind Attn: [${p.client_name}]`, 15, 70);
+    doc.text(`Email / Phone: [${p.client_email || 'N/A'}]`, 15, 75);
 
-    // Details Box
-    doc.setFillColor(249, 250, 251); // Gray 50
-    doc.setDrawColor(229, 231, 235); // Gray 200
-    doc.roundedRect(145, 47, 50, 25, 2, 2, 'FD'); // Fill and Draw
-    doc.setFontSize(9);
+    // Prepared By
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(107, 114, 128);
-    doc.text('PROPOSAL ID:', 150, 54);
-    doc.text('DATE:', 150, 62);
-    doc.text('VALID UNTIL:', 150, 70);
-    
+    doc.text('Prepared By:', 105, 60);
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(31, 41, 55);
-    doc.text(`PR-${p.id}`, 190, 54, { align: 'right' });
-    doc.text(`${new Date(p.created_at).toLocaleDateString()}`, 190, 62, { align: 'right' });
-    
-    let validDate = new Date(p.created_at);
-    validDate.setDate(validDate.getDate() + 30);
-    doc.text(`${validDate.toLocaleDateString()}`, 190, 70, { align: 'right' });
+    doc.text('Company Name: Hatbaliya Technologies', 105, 65);
+    doc.text('Lead Specialist: Avnish Kumar', 105, 70);
+    doc.text('Location: Rajendra Park, Gurgaon, Haryana, India', 105, 75);
+    doc.text('Contact: contact@hatbaliya.com', 105, 80);
 
-    // Project Details
-    doc.setFontSize(18);
+    // Project Statement
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(30, 64, 175); // Corporate blue
-    doc.text(p.project_name, 15, 95);
-    
+    doc.text('Project Statement:', 15, 90);
+    doc.setFont('helvetica', 'normal');
+    const statement = "Hatbaliya Technologies is pleased to submit this proposal for engineering a custom, high-performance Web Application. Our goal is to design and implement a scalable, secure, and user-centric digital solution using modern MERN stack architecture (MongoDB, Express.js, React.js, Node.js) tailored specifically to streamline your business operations.";
+    doc.text(doc.splitTextToSize(statement, 180), 15, 95);
+
+    // 2. Scope of Services & Key Deliverables
     doc.setFontSize(12);
+    doc.setTextColor(17, 24, 39);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(31, 41, 55);
-    doc.text('Executive Summary & Scope of Work', 15, 105);
-    
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(11);
-    doc.setTextColor(75, 85, 99); // Gray 600
-    const splitDetails = doc.splitTextToSize(p.details || 'Detailed scope of work to be provided.', 180);
-    doc.text(splitDetails, 15, 112);
+    doc.text('2. Scope of Services & Key Deliverables', 15, 115);
 
-    let finalY = 112 + (splitDetails.length * 5) + 15;
+    doc.setFontSize(10);
+    doc.setTextColor(55, 65, 81);
+    const scopeBullets = [
+      "• System Architecture & Database Design: Modular Node.js backend infrastructure backed by optimized MongoDB schemas, indexing, and RESTful API architecture.",
+      "• Frontend UI/UX Interface: Interactive, state-driven user interface built with React.js featuring responsive mobile-first layouts.",
+      "• Authentication & Security: Enterprise-grade JWT/OAuth authentication, role-based access control (RBAC), and SSL data encryption.",
+      "• Quality Assurance & Optimization: Rigorous cross-browser testing, UI responsiveness audits, load handling, and speed optimization.",
+      "• Deployment & Cloud Integration: Automated CI/CD pipeline deployment to AWS/Cloud hosting with real-time error logging and monitoring."
+    ];
+    let scopeY = 122;
+    scopeBullets.forEach(bullet => {
+      const splitBullet = doc.splitTextToSize(bullet, 175);
+      doc.text(splitBullet, 20, scopeY);
+      scopeY += (splitBullet.length * 4.5) + 2;
+    });
 
-    // Investment Table (Clean, corporate)
+    // 3. Implementation Roadmap & Milestones
+    doc.setFontSize(12);
+    doc.setTextColor(17, 24, 39);
+    doc.setFont('helvetica', 'bold');
+    doc.text('3. Implementation Roadmap & Milestones', 15, scopeY + 8);
+
     autoTable(doc, {
-      startY: finalY,
-      head: [['DESCRIPTION', 'ESTIMATED INVESTMENT']],
+      startY: scopeY + 12,
+      head: [['Phase', 'Deliverable Phase Description', 'Estimated Timeline', 'Target']],
       body: [
-        ['Core Project Development & Implementation', `Rs. ${Number(p.value).toLocaleString()}`]
+        ['Phase 01', 'Requirements Gathering, Wireframing & System Design', '2 Weeks', 'Week 2'],
+        ['Phase 02', 'Backend RESTful API Engine & Database Setup', '3 Weeks', 'Week 5'],
+        ['Phase 03', 'Frontend UI Engineering & API Integration', '3 Weeks', 'Week 8'],
+        ['Phase 04', 'End-to-End QA Testing & Security Audits', '2 Weeks', 'Week 10'],
+        ['Phase 05', 'Production Deployment & Final Go-Live Support', '1 Week', 'Week 11']
       ],
-      theme: 'plain',
-      headStyles: { 
-        fillColor: [243, 244, 246], // Gray 100
-        textColor: [55, 65, 81], // Gray 700
-        fontStyle: 'bold',
-        fontSize: 10,
-        lineWidth: { bottom: 0.5 },
-        lineColor: [209, 213, 219] // Gray 300
-      },
-      bodyStyles: { 
-        fontSize: 11, 
-        textColor: [31, 41, 55], // Gray 800
-      },
-      alternateRowStyles: {
-        fillColor: [255, 255, 255]
-      },
-      columnStyles: {
-        0: { cellWidth: 120 },
-        1: { halign: 'right', fontStyle: 'bold', textColor: [31, 41, 55], fontSize: 11 } 
-      },
-      styles: { cellPadding: 8 },
+      theme: 'grid',
+      headStyles: { fillColor: [243, 244, 246], textColor: [17, 24, 39], fontStyle: 'bold', fontSize: 9 },
+      bodyStyles: { fontSize: 9, textColor: [55, 65, 81] },
+      styles: { cellPadding: 4, lineColor: [229, 231, 235], lineWidth: 0.1 },
       margin: { left: 15, right: 15 }
     });
 
-    finalY = doc.lastAutoTable.finalY + 15;
-
-    // Terms
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(31, 41, 55);
-    doc.text('Terms & Conditions', 15, finalY);
-    
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(75, 85, 99);
-    const splitTerms = doc.splitTextToSize(p.terms, 180);
-    doc.text(splitTerms, 15, finalY + 8);
-    
-    finalY = finalY + 8 + (splitTerms.length * 5) + 20;
-
-    // Signature Area
-    if (finalY > 230) {
+    // 4. Commercial Investment & Payment Terms
+    let finalY = doc.lastAutoTable.finalY + 12;
+    if (finalY > 200) {
       doc.addPage();
-      finalY = 30;
+      finalY = 20;
     }
-    
-    doc.setDrawColor(209, 213, 219);
-    // Client Signature
-    doc.line(15, finalY + 20, 85, finalY + 20);
+
+    doc.setFontSize(12);
+    doc.setTextColor(17, 24, 39);
+    doc.setFont('helvetica', 'bold');
+    doc.text('4. Commercial Investment & Payment Terms', 15, finalY);
+
+    autoTable(doc, {
+      startY: finalY + 4,
+      head: [['Module Description', 'Billing Type', 'Amount (INR)']],
+      body: [
+        ['Full-Stack Web Application Engineering (React & Node.js Architecture)', 'Milestone-based', '₹2,50,000'],
+        ['Database Architecture & Cloud Infrastructure Setup', 'Milestone-based', '₹80,000'],
+        ['Quality Assurance, System Testing & Documentation', 'Milestone-based', '₹40,000'],
+        ['12-Month Post-Launch Maintenance & Technical Support', 'Annual SLA', '₹50,000'],
+      ],
+      foot: [['Total Estimated Investment', '', '₹4,20,000']],
+      theme: 'grid',
+      headStyles: { fillColor: [243, 244, 246], textColor: [17, 24, 39], fontStyle: 'bold', fontSize: 9 },
+      bodyStyles: { fontSize: 9, textColor: [55, 65, 81] },
+      footStyles: { fillColor: [243, 244, 246], textColor: [17, 24, 39], fontStyle: 'bold', fontSize: 10 },
+      styles: { cellPadding: 4, lineColor: [229, 231, 235], lineWidth: 0.1 },
+      margin: { left: 15, right: 15 }
+    });
+
+    finalY = doc.lastAutoTable.finalY + 10;
+
     doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(55, 65, 81);
-    doc.text('Accepted By (Client):', 15, finalY + 25);
+    doc.text('Payment Milestone Schedule:', 15, finalY);
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(107, 114, 128);
-    doc.text(p.client_name, 15, finalY + 30);
-    doc.text('Date: ________________', 15, finalY + 35);
+    const paymentTerms = [
+      "• 30% Advance Retainer upon contract execution.",
+      "• 40% Milestone Payment upon completion of Phase 03 (Frontend & Backend Integration).",
+      "• 30% Final Payment upon completion of User Acceptance Testing (UAT) and deployment."
+    ];
+    let pyY = finalY + 5;
+    paymentTerms.forEach(pt => {
+      doc.text(pt, 20, pyY);
+      pyY += 5;
+    });
+
+    // 5. Acceptance & Authorization
+    if (pyY > 220) {
+      doc.addPage();
+      pyY = 20;
+    } else {
+      pyY += 10;
+    }
+
+    doc.setFontSize(12);
+    doc.setTextColor(17, 24, 39);
+    doc.setFont('helvetica', 'bold');
+    doc.text('5. Acceptance & Authorization', 15, pyY);
     
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(55, 65, 81);
+    doc.text('Please sign and date below to accept the terms, scope, and pricing outlined in this proposal.', 15, pyY + 6);
+
+    pyY += 25;
+
     // Hatbaliya Signature
-    doc.line(125, finalY + 20, 195, finalY + 20);
-    doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(55, 65, 81);
-    doc.text('Authorized By:', 125, finalY + 25);
+    doc.text('Hatbaliya Technologies', 15, pyY);
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(107, 114, 128);
-    doc.text('Hatbaliya Technologies', 125, finalY + 30);
-    doc.text('Date: ________________', 125, finalY + 35);
+    doc.text('Signature: ___________________________', 15, pyY + 8);
+    doc.text('Name: Avnish Kumar', 15, pyY + 16);
+    doc.text('Date: August 22, 2026', 15, pyY + 24);
+
+    // Client Signature
+    doc.setFont('helvetica', 'bold');
+    doc.text('Client Acceptance', 115, pyY);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Signature: ___________________________', 115, pyY + 8);
+    doc.text(`Name: [${p.client_name}]`, 115, pyY + 16);
+    doc.text('Date: ________________', 115, pyY + 24);
 
     // Footer
     const pageCount = doc.internal.getNumberOfPages();
     for(let i = 1; i <= pageCount; i++) {
       doc.setPage(i);
       const pageHeight = doc.internal.pageSize.height;
-      
       doc.setDrawColor(229, 231, 235);
       doc.line(15, pageHeight - 15, 195, pageHeight - 15);
-      
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'italic');
       doc.setTextColor(156, 163, 175);
-      doc.text('CONFIDENTIAL PROPOSAL | Hatbaliya Technologies', 15, pageHeight - 10);
+      doc.text('Hatbaliya Technologies - Business Proposal', 15, pageHeight - 10);
       doc.text(`Page ${i} of ${pageCount}`, 195, pageHeight - 10, { align: 'right' });
     }
 
