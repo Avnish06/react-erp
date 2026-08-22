@@ -360,7 +360,8 @@ router.put('/tasks/:id', verifyToken, async (req, res) => {
     const projectId = existing.length > 0 ? existing[0].project_id : null;
 
     const query = 'UPDATE tasks SET title=?, description=?, deadline=?, status=?, assigned_to=? WHERE id=?';
-    await db.promise.query(query, [title, description, deadline, status, assigned_to || null, req.params.id]);
+    const formattedDeadline = deadline ? new Date(deadline).toISOString().split('T')[0] : null;
+    await db.promise.query(query, [title || null, description || null, formattedDeadline, status, assigned_to || null, req.params.id]);
 
     if (assigned_to && String(assigned_to) !== String(existingAssignee)) {
       let project_title = '';
@@ -399,7 +400,8 @@ router.put('/:id', verifyToken, async (req, res) => {
     const projectName = name || (existing.length > 0 ? existing[0].name : '');
 
     const query = 'UPDATE projects SET name=?, description=?, deadline=?, status=?, assigned_to=? WHERE id=?';
-    await db.promise.query(query, [name, description, deadline, status, assigned_to || null, req.params.id]);
+    const formattedDeadline = deadline ? new Date(deadline).toISOString().split('T')[0] : null;
+    await db.promise.query(query, [name || null, description || null, formattedDeadline, status, assigned_to || null, req.params.id]);
 
     if (assigned_to && String(assigned_to) !== String(existingAssignee)) {
       await sendProjectAssignmentNotification(assigned_to, projectName, req.user ? req.user.id : null, req.company_name);
