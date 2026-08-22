@@ -169,92 +169,82 @@ const ClientProposals = () => {
     const doc = new jsPDF();
     
     // Create a stunning, professional cover-like header
-    // Deep rich blue gradient-like header (solid fill)
-    doc.setFillColor(10, 25, 47); // Dark navy blue
-    doc.rect(0, 0, 210, 60, 'F');
-    
-    // Accent line at the bottom of the header
-    doc.setFillColor(0, 212, 255); // Cyan/Bright Blue accent
-    doc.rect(0, 60, 210, 2, 'F');
-
-    // Accent shape in header (subtle polygon for modern look)
-    doc.setFillColor(17, 34, 64);
-    doc.triangle(150, 0, 210, 0, 210, 60, 'F');
+    doc.setFillColor(20, 25, 35); // Sleek dark aesthetic
+    doc.rect(0, 0, 210, 65, 'F');
+    // Subtle geometric pattern
+    doc.setFillColor(25, 31, 44);
+    doc.circle(210, 0, 45, 'F');
+    doc.setFillColor(34, 197, 94); // Emerald accent
+    doc.rect(0, 65, 210, 1.5, 'F');
 
     // Logo / Branding Text
     if (logo) {
-      // Much larger, stunning logo display
-      doc.addImage(logo, 'PNG', 15, 12, 45, 32);
+      doc.addImage(logo, 'PNG', 15, 15, 35, 35);
       doc.setFontSize(26);
       doc.setTextColor(255, 255, 255);
       doc.setFont('helvetica', 'bold');
-      doc.text('HATBALIYA', 65, 30);
-      doc.setFontSize(14);
-      doc.setTextColor(136, 146, 176); // Light slate
+      doc.text('HATBALIYA', 55, 32);
+      doc.setFontSize(13);
+      doc.setTextColor(156, 163, 175); 
       doc.setFont('helvetica', 'normal');
-      doc.text('TECHNOLOGIES', 65, 38);
+      doc.text('TECHNOLOGIES', 55, 40);
     } else {
-      doc.setFontSize(32);
+      doc.setFontSize(28);
       doc.setTextColor(255, 255, 255);
       doc.setFont('helvetica', 'bold');
       doc.text('HATBALIYA', 20, 32);
-      doc.setFontSize(16);
-      doc.setTextColor(136, 146, 176); 
+      doc.setFontSize(14);
+      doc.setTextColor(156, 163, 175); 
       doc.setFont('helvetica', 'normal');
-      doc.text('TECHNOLOGIES', 20, 42);
+      doc.text('TECHNOLOGIES', 20, 40);
     }
 
     // Proposal Tag - aligned to the right
-    doc.setFontSize(14);
-    doc.setTextColor(0, 212, 255); // Cyan accent
+    doc.setFontSize(18);
+    doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'bold');
-    doc.text('PROJECT PROPOSAL', 195, 30, { align: 'right' });
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(204, 214, 246);
-    doc.text(`Date: ${new Date(p.created_at).toLocaleDateString()}`, 195, 38, { align: 'right' });
-
-    // Client Details Section (Elegant floating card look)
-    doc.setFillColor(245, 247, 250); // Very light grey blue
-    doc.roundedRect(15, 75, 180, 45, 4, 4, 'F');
-    // Subtle border for card
-    doc.setDrawColor(226, 232, 240);
-    doc.setLineWidth(0.5);
-    doc.roundedRect(15, 75, 180, 45, 4, 4, 'S');
-    
-    doc.setTextColor(15, 23, 42); 
+    doc.text('PROJECT PROPOSAL', 195, 32, { align: 'right' });
     doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text('PREPARED FOR', 25, 90);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(34, 197, 94); // Emerald text
+    doc.text(`DATE: ${new Date(p.created_at).toLocaleDateString()}`, 195, 40, { align: 'right' });
+
+    // Client Details Section (Modern floating card)
+    doc.setFillColor(249, 250, 251); 
+    doc.roundedRect(15, 80, 180, 40, 5, 5, 'F');
     
-    doc.setFontSize(16);
-    doc.setTextColor(10, 25, 47); // Dark navy
-    doc.text(p.client_name, 25, 102);
+    doc.setTextColor(107, 114, 128); 
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text('PREPARED FOR:', 22, 92);
+    
+    doc.setFontSize(18);
+    doc.setTextColor(31, 41, 55); 
+    doc.text(p.client_name, 22, 103);
     
     if (p.client_email) {
       doc.setFontSize(11);
       doc.setFont('helvetica', 'normal');
-      doc.setTextColor(100, 116, 139); 
-      doc.text(p.client_email, 25, 110);
+      doc.text(p.client_email, 22, 111);
     }
 
-    doc.setFontSize(12);
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(15, 23, 42);
-    doc.text('PROPOSAL ID', 140, 90);
-    doc.setFontSize(14);
+    doc.setTextColor(107, 114, 128);
+    doc.text('PROPOSAL ID:', 140, 92);
+    doc.setFontSize(12);
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(10, 25, 47);
-    doc.text(`PR-${p.id}`, 140, 102);
+    doc.setTextColor(31, 41, 55);
+    doc.text(`PR-${p.id}`, 140, 100);
 
     // Project Details - Section Header
     doc.setFontSize(22);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(10, 25, 47);
+    doc.setTextColor(31, 41, 55);
     doc.text(p.project_name.toUpperCase(), 15, 140);
     
     // Underline accent
-    doc.setDrawColor(0, 212, 255); // Cyan
+    doc.setDrawColor(34, 197, 94); // Emerald
     doc.setLineWidth(2);
     doc.line(15, 144, 45, 144);
 
@@ -274,31 +264,30 @@ const ClientProposals = () => {
     // Pricing / Investment Table - Stunning Design
     autoTable(doc, {
       startY: finalY,
-      head: [['Description', 'Estimated Investment']],
+      head: [['DESCRIPTION', 'ESTIMATED INVESTMENT']],
       body: [
         ['Core Project Development & Implementation', `Rs. ${Number(p.value).toLocaleString()}`]
       ],
-      theme: 'grid',
+      theme: 'plain',
       headStyles: { 
-        fillColor: [10, 25, 47], 
-        textColor: 255, 
+        fillColor: [243, 244, 246], 
+        textColor: [75, 85, 99], 
         fontStyle: 'bold', 
         halign: 'left',
-        fontSize: 12
+        fontSize: 10
       },
       bodyStyles: { 
         fontSize: 12, 
-        textColor: [30, 41, 59],
-        fillColor: [250, 251, 252] 
+        textColor: [55, 65, 81],
       },
       alternateRowStyles: {
-        fillColor: [255, 255, 255]
+        fillColor: [252, 253, 254]
       },
       columnStyles: {
         0: { cellWidth: 120 },
-        1: { halign: 'right', fontStyle: 'bold', textColor: [10, 25, 47], fontSize: 13 } 
+        1: { halign: 'right', fontStyle: 'bold', textColor: [31, 41, 55], fontSize: 13 } 
       },
-      styles: { cellPadding: 10, lineColor: [226, 232, 240], lineWidth: 0.5 },
+      styles: { cellPadding: 10, lineColor: [229, 231, 235], lineWidth: 0.1 },
       margin: { left: 15, right: 15 }
     });
 
@@ -313,11 +302,11 @@ const ClientProposals = () => {
       
       doc.setFontSize(16);
       doc.setFont('helvetica', 'bold');
-      doc.setTextColor(10, 25, 47);
+      doc.setTextColor(31, 41, 55);
       doc.text('Terms & Conditions', 15, finalY);
       
       // Underline accent
-      doc.setDrawColor(0, 212, 255);
+      doc.setDrawColor(34, 197, 94); // Emerald
       doc.setLineWidth(1.5);
       doc.line(15, finalY + 3, 35, finalY + 3);
 
@@ -337,18 +326,18 @@ const ClientProposals = () => {
       const pageHeight = doc.internal.pageSize.height;
       
       // Add a footer graphic at the bottom
-      doc.setFillColor(10, 25, 47);
+      doc.setFillColor(20, 25, 35);
       doc.rect(0, pageHeight - 20, 210, 20, 'F');
-      doc.setFillColor(0, 212, 255);
+      doc.setFillColor(34, 197, 94);
       doc.rect(0, pageHeight - 20, 210, 1, 'F');
 
       doc.setFontSize(10);
       doc.setFont('helvetica', 'italic');
-      doc.setTextColor(204, 214, 246);
+      doc.setTextColor(209, 213, 219);
       doc.text('Transforming your vision into reality. | Hatbaliya Technologies', 105, pageHeight - 12, { align: 'center' });
       doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
-      doc.setTextColor(136, 146, 176);
+      doc.setTextColor(156, 163, 175);
       doc.text('www.hatbaliya.com', 105, pageHeight - 7, { align: 'center' });
     }
 
