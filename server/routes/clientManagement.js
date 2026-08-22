@@ -62,6 +62,23 @@ router.post('/proposals', verifyToken, (req, res) => {
   );
 });
 
+// @route   DELETE /api/client-management/proposals/:id
+// @desc    Admin deletes a proposal
+router.delete('/proposals/:id', verifyToken, (req, res) => {
+  const proposalId = req.params.id;
+  const userRole = req.user.role;
+  const isAdmin = userRole === 'Admin' || userRole === 'Super Admin' || userRole === 'Developer';
+  
+  if (!isAdmin) {
+    return res.status(403).json({ success: false, message: 'Access Denied: Only Admins can delete proposals' });
+  }
+
+  db.query('DELETE FROM proposals WHERE id = ?', [proposalId], (err, result) => {
+    if (err) return res.status(500).json({ success: false, message: 'Database error' });
+    res.json({ success: true, message: 'Proposal deleted successfully' });
+  });
+});
+
 // @route   POST /api/client-management/proposals/:id/send-email
 // @desc    Upload PDF and send proposal to client via email
 router.post('/proposals/:id/send-email', verifyToken, upload.single('proposal_pdf'), (req, res) => {

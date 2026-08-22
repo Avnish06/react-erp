@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from '../axiosConfig';
 import { toast } from 'sonner';
-import { FileText, CheckCircle, Clock, Plus, X, Mail, Download } from 'lucide-react';
+import { FileText, CheckCircle, Clock, Plus, X, Mail, Download, Trash2 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import logoImg from '../assets/logo_transparent.png';
@@ -56,6 +56,19 @@ const ClientProposals = () => {
       }
     } catch (err) {
       toast.error('Failed to approve proposal');
+    }
+  };
+
+  const handleDeleteProposal = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this proposal?')) return;
+    try {
+      const res = await axios.delete(`/api/client-management/proposals/${id}`);
+      if (res.data.success) {
+        toast.success('Proposal deleted successfully');
+        fetchProposals();
+      }
+    } catch (err) {
+      toast.error('Failed to delete proposal');
     }
   };
 
@@ -155,95 +168,110 @@ const ClientProposals = () => {
 
     const doc = new jsPDF();
     
-    // Header - Modern Dark Blue
-    doc.setFillColor(15, 23, 42); // slate-900
-    doc.rect(0, 0, 210, 45, 'F');
+    // Create a stunning, professional cover-like header
+    // Deep rich blue gradient-like header (solid fill)
+    doc.setFillColor(10, 25, 47); // Dark navy blue
+    doc.rect(0, 0, 210, 60, 'F');
     
+    // Accent line at the bottom of the header
+    doc.setFillColor(0, 212, 255); // Cyan/Bright Blue accent
+    doc.rect(0, 60, 210, 2, 'F');
+
+    // Accent shape in header (subtle polygon for modern look)
+    doc.setFillColor(17, 34, 64);
+    doc.triangle(150, 0, 210, 0, 210, 60, 'F');
+
     // Logo / Branding Text
     if (logo) {
-      doc.addImage(logo, 'PNG', 15, 10, 35, 25);
-      doc.setFontSize(22);
+      // Much larger, stunning logo display
+      doc.addImage(logo, 'PNG', 15, 12, 45, 32);
+      doc.setFontSize(26);
       doc.setTextColor(255, 255, 255);
       doc.setFont('helvetica', 'bold');
-      doc.text('HATBALIYA', 55, 25);
-      doc.setFontSize(12);
-      doc.setTextColor(148, 163, 184); // slate-400
-      doc.setFont('helvetica', 'normal');
-      doc.text('TECHNOLOGIES', 55, 33);
-    } else {
-      doc.setFontSize(28);
-      doc.setTextColor(255, 255, 255);
-      doc.setFont('helvetica', 'bold');
-      doc.text('HATBALIYA', 20, 22);
+      doc.text('HATBALIYA', 65, 30);
       doc.setFontSize(14);
-      doc.setTextColor(148, 163, 184); // slate-400
+      doc.setTextColor(136, 146, 176); // Light slate
       doc.setFont('helvetica', 'normal');
-      doc.text('TECHNOLOGIES', 20, 32);
+      doc.text('TECHNOLOGIES', 65, 38);
+    } else {
+      doc.setFontSize(32);
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.text('HATBALIYA', 20, 32);
+      doc.setFontSize(16);
+      doc.setTextColor(136, 146, 176); 
+      doc.setFont('helvetica', 'normal');
+      doc.text('TECHNOLOGIES', 20, 42);
     }
 
-    // Proposal Tag
-    doc.setFontSize(12);
-    doc.setTextColor(255, 255, 255);
-    doc.setFont('helvetica', 'bold');
-    doc.text('PROJECT PROPOSAL', 190, 28, { align: 'right' });
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(148, 163, 184);
-    doc.text(`Date: ${new Date(p.created_at).toLocaleDateString()}`, 190, 35, { align: 'right' });
-
-    // Client Details Section (Card like background)
-    doc.setFillColor(248, 250, 252); // slate-50
-    doc.roundedRect(20, 55, 170, 35, 3, 3, 'F');
-    
-    doc.setTextColor(30, 41, 59); // slate-800
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'bold');
-    doc.text('PREPARED FOR:', 25, 65);
-    
+    // Proposal Tag - aligned to the right
     doc.setFontSize(14);
-    doc.setTextColor(15, 23, 42); // slate-900
-    doc.text(p.client_name, 25, 75);
+    doc.setTextColor(0, 212, 255); // Cyan accent
+    doc.setFont('helvetica', 'bold');
+    doc.text('PROJECT PROPOSAL', 195, 30, { align: 'right' });
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(204, 214, 246);
+    doc.text(`Date: ${new Date(p.created_at).toLocaleDateString()}`, 195, 38, { align: 'right' });
+
+    // Client Details Section (Elegant floating card look)
+    doc.setFillColor(245, 247, 250); // Very light grey blue
+    doc.roundedRect(15, 75, 180, 45, 4, 4, 'F');
+    // Subtle border for card
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.5);
+    doc.roundedRect(15, 75, 180, 45, 4, 4, 'S');
+    
+    doc.setTextColor(15, 23, 42); 
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('PREPARED FOR', 25, 90);
+    
+    doc.setFontSize(16);
+    doc.setTextColor(10, 25, 47); // Dark navy
+    doc.text(p.client_name, 25, 102);
     
     if (p.client_email) {
-      doc.setFontSize(10);
+      doc.setFontSize(11);
       doc.setFont('helvetica', 'normal');
-      doc.setTextColor(100, 116, 139); // slate-500
-      doc.text(p.client_email, 25, 82);
+      doc.setTextColor(100, 116, 139); 
+      doc.text(p.client_email, 25, 110);
     }
 
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(30, 41, 59);
-    doc.text('PROPOSAL ID:', 130, 65);
     doc.setFontSize(12);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`PR-${p.id}`, 130, 75);
-
-    // Project Details
-    doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(15, 23, 42);
-    doc.text(p.project_name.toUpperCase(), 20, 110);
+    doc.text('PROPOSAL ID', 140, 90);
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(10, 25, 47);
+    doc.text(`PR-${p.id}`, 140, 102);
+
+    // Project Details - Section Header
+    doc.setFontSize(22);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(10, 25, 47);
+    doc.text(p.project_name.toUpperCase(), 15, 140);
     
     // Underline accent
-    doc.setDrawColor(234, 88, 12); // orange-600
-    doc.setLineWidth(1.5);
-    doc.line(20, 113, 40, 113);
+    doc.setDrawColor(0, 212, 255); // Cyan
+    doc.setLineWidth(2);
+    doc.line(15, 144, 45, 144);
 
-    doc.setFontSize(12);
+    doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(51, 65, 85); // slate-700
-    doc.text('Executive Summary / Scope of Work', 20, 125);
+    doc.setTextColor(30, 41, 59);
+    doc.text('Executive Summary & Scope of Work', 15, 158);
     
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(11);
-    doc.setTextColor(71, 85, 105); // slate-600
-    const splitDetails = doc.splitTextToSize(p.details || 'Standard project scope applies. No additional details provided.', 170);
-    doc.text(splitDetails, 20, 135);
+    doc.setFontSize(12);
+    doc.setTextColor(71, 85, 105);
+    const splitDetails = doc.splitTextToSize(p.details || 'Standard project scope applies. No additional details provided.', 180);
+    doc.text(splitDetails, 15, 168);
 
-    let finalY = 135 + (splitDetails.length * 6) + 15;
+    let finalY = 168 + (splitDetails.length * 6) + 15;
 
-    // Pricing / Investment Table
+    // Pricing / Investment Table - Stunning Design
     autoTable(doc, {
       startY: finalY,
       head: [['Description', 'Estimated Investment']],
@@ -251,47 +279,78 @@ const ClientProposals = () => {
         ['Core Project Development & Implementation', `Rs. ${Number(p.value).toLocaleString()}`]
       ],
       theme: 'grid',
-      headStyles: { fillColor: [15, 23, 42], textColor: 255, fontStyle: 'bold', halign: 'center' },
-      bodyStyles: { fontSize: 11, textColor: [30, 41, 59] },
-      columnStyles: {
-        1: { halign: 'right', fontStyle: 'bold', textColor: [234, 88, 12] } // Orange accent for price
+      headStyles: { 
+        fillColor: [10, 25, 47], 
+        textColor: 255, 
+        fontStyle: 'bold', 
+        halign: 'left',
+        fontSize: 12
       },
-      styles: { cellPadding: 8 }
+      bodyStyles: { 
+        fontSize: 12, 
+        textColor: [30, 41, 59],
+        fillColor: [250, 251, 252] 
+      },
+      alternateRowStyles: {
+        fillColor: [255, 255, 255]
+      },
+      columnStyles: {
+        0: { cellWidth: 120 },
+        1: { halign: 'right', fontStyle: 'bold', textColor: [10, 25, 47], fontSize: 13 } 
+      },
+      styles: { cellPadding: 10, lineColor: [226, 232, 240], lineWidth: 0.5 },
+      margin: { left: 15, right: 15 }
     });
 
-    finalY = doc.lastAutoTable.finalY + 20;
+    finalY = doc.lastAutoTable.finalY + 25;
 
     // Terms and Conditions
     if (p.terms) {
       if (finalY > 230) {
         doc.addPage();
-        finalY = 20;
+        finalY = 30;
       }
       
-      doc.setFontSize(14);
+      doc.setFontSize(16);
       doc.setFont('helvetica', 'bold');
-      doc.setTextColor(15, 23, 42);
-      doc.text('Terms & Conditions', 20, finalY);
+      doc.setTextColor(10, 25, 47);
+      doc.text('Terms & Conditions', 15, finalY);
       
       // Underline accent
-      doc.setDrawColor(234, 88, 12); // orange-600
-      doc.setLineWidth(1);
-      doc.line(20, finalY + 2, 35, finalY + 2);
+      doc.setDrawColor(0, 212, 255);
+      doc.setLineWidth(1.5);
+      doc.line(15, finalY + 3, 35, finalY + 3);
 
-      doc.setFontSize(10);
+      doc.setFontSize(11);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(100, 116, 139);
-      const splitTerms = doc.splitTextToSize(p.terms, 170);
-      doc.text(splitTerms, 20, finalY + 12);
+      const splitTerms = doc.splitTextToSize(p.terms, 180);
+      doc.text(splitTerms, 15, finalY + 12);
       
-      finalY = finalY + 12 + (splitTerms.length * 5) + 25;
+      finalY = finalY + 12 + (splitTerms.length * 6) + 30;
     }
 
-    // Footer / Signoff
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'italic');
-    doc.setTextColor(148, 163, 184);
-    doc.text('We look forward to transforming your vision into reality.', 105, finalY, { align: 'center' });
+    // Footer / Signoff on the bottom of every page
+    const pageCount = doc.internal.getNumberOfPages();
+    for(let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      const pageHeight = doc.internal.pageSize.height;
+      
+      // Add a footer graphic at the bottom
+      doc.setFillColor(10, 25, 47);
+      doc.rect(0, pageHeight - 20, 210, 20, 'F');
+      doc.setFillColor(0, 212, 255);
+      doc.rect(0, pageHeight - 20, 210, 1, 'F');
+
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'italic');
+      doc.setTextColor(204, 214, 246);
+      doc.text('Transforming your vision into reality. | Hatbaliya Technologies', 105, pageHeight - 12, { align: 'center' });
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(136, 146, 176);
+      doc.text('www.hatbaliya.com', 105, pageHeight - 7, { align: 'center' });
+    }
 
     if (action === 'download') {
       doc.save(`Proposal_${p.client_name.replace(/\s+/g, '_')}_PR${p.id}.pdf`);
@@ -443,6 +502,16 @@ const ClientProposals = () => {
                       className="bg-slate-500 hover:bg-slate-600 text-white px-3 py-1.5 rounded text-xs font-bold whitespace-nowrap transition-colors shadow-sm ml-2"
                     >
                       CEO Approve
+                    </button>
+                  )}
+
+                  {isAdmin && (
+                    <button 
+                      onClick={() => handleDeleteProposal(p.id)}
+                      className="bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 rounded text-xs font-bold flex items-center gap-1 transition-colors border border-red-200 ml-2"
+                      title="Delete Proposal"
+                    >
+                      <Trash2 size={14} /> Delete
                     </button>
                   )}
                 </div>
