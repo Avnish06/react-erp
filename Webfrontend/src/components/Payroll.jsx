@@ -7,7 +7,7 @@ import ConfirmModal from './ConfirmModal';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import SalarySlipGenerator from './SalarySlipGenerator';
-import logoImg from '../assets/logo_transparent.png';
+const logoImg = '/erp_logo.png';
 
 const Payroll = ({ initialTab = 'list' }) => {
   const [payrollData, setPayrollData] = useState([]);

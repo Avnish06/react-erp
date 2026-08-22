@@ -124,7 +124,7 @@ import ClientOnboarding from './ClientOnboarding';
 import ClientPortalHome from './ClientPortalHome';
 import Customer360 from './Customer360';
 import AILeadScoring from './AILeadScoring';
-import logo from '../assets/logo_transparent.png';
+const logoImg = '/erp_logo.png';
 import logoHatbaliya from '../assets/logo_hatbaliya_orig.png';
 import logoColvo from '../assets/logo_colvo_orig.png';
 

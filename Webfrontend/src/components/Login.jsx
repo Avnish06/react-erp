@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { User, Lock, ArrowRight, UserPlus, ShieldCheck } from 'lucide-react';
 import axios from '../axiosConfig';
-import logo from '../assets/logo_transparent.png';
+const logo = '/erp_logo.png';
 
 const Login = () => {
   const [email, setEmail] = useState('');

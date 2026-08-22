@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Lock, ArrowRight, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import axios from '../axiosConfig';
-import logo from '../assets/logo_transparent.png';
+const logo = '/erp_logo.png';
 
 const ResetPassword = () => {
   const { token } = useParams();

@@ -3,7 +3,7 @@ import axios from '../axiosConfig';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { User, Mail, Lock, UserPlus, ShieldCheck, ChevronLeft } from 'lucide-react';
-import logo from '../assets/logo_transparent.png';
+const logo = '/erp_logo.png';
 
 const Register = () => {
   const [formData, setFormData] = useState({

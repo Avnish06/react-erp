@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from '../axiosConfig';
 import { toast } from 'sonner';
-import logo from '../assets/logo_transparent.png';
+const logo = '/erp_logo.png';
 import { Building2, User, Mail, Phone, Lock, ArrowRight, ShieldCheck } from 'lucide-react';
 
 const VendorRegistration = () => {

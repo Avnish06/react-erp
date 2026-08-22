@@ -3,7 +3,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { Download, Edit, RefreshCw, Printer, Info, Save } from 'lucide-react';
 import { toast } from 'sonner';
-import logoImg from '../assets/logo_transparent.png';
+const logoImg = '/erp_logo.png';
 
 export default function SalarySlipGenerator({ payroll = null, onClose }) {
   const [slip, setSlip] = useState({

@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { FileText, CheckCircle, Clock, Plus, X, Mail, Download, Trash2 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import logoImg from '../assets/logo_transparent.png';
+const logoImg = '/erp_logo.png';
 
 const defaultTerms = "1. Standard Validity: This proposal is valid for 30 days.\n2. Payment Terms: 50% upfront, 50% upon completion.\n3. Confidentiality: Both parties agree to maintain strict confidentiality.\n4. Scope Adjustments: Any changes to the scope of work may require a revised proposal.";
 

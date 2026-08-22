@@ -4,7 +4,7 @@ import html2canvas from 'html2canvas';
 import { Download, Edit, X, Save, FileText, CheckCircle2, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import EmployeeOnboardingWizard from './EmployeeOnboardingWizard';
-import logoImg from '../assets/logo_transparent.png';
+const logoImg = '/erp_logo.png';
 
 export default function OfferLetterGenerator({ onClose }) {
   const [isEditing, setIsEditing] = useState(true);

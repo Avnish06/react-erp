@@ -4,7 +4,7 @@ import { FileText, Download, Search, Filter, Calendar, Plus, BarChart3 } from 'l
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import logoImg from '../assets/logo_transparent.png';
+const logoImg = '/erp_logo.png';
 
 const ReportHistory = () => {
   const [reports, setReports] = useState([]);
