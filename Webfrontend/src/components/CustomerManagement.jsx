@@ -269,7 +269,7 @@ const CustomerManagement = ({ onNavigate }) => {
                   </td>
                   <td className="px-6 py-4 text-sm font-medium text-gray-700">{customer.assigned_to_name || 'Unassigned'}</td>
                   <td className="px-6 py-4 text-right">
-                    <div className="flex flex-wrap items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex flex-wrap items-center justify-end gap-2 transition-opacity">
                       <button
                         onClick={() => openProposalModal(customer)}
                         className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white rounded-lg transition-all shadow-sm"
