@@ -336,12 +336,33 @@ router.put('/:id', verifyToken, checkPermission('manage_users'), (req, res) => {
 });
 
 // Delete employee
-router.delete('/:id', verifyToken, checkPermission('manage_users'), (req, res) => {
-  // Cascading deletes handle profile tables automatically
-  db.query('DELETE FROM user_identities WHERE id = ?', [req.params.id], (err) => {
-    if (err) return res.status(500).json({ success: false, message: 'Error deleting user' });
-    res.json({ success: true, message: 'User and linked profiles deleted successfully' });
-  });
+router.delete('/:id', verifyToken, checkPermission('manage_users'), async (req, res) => {
+  const userId = req.params.id;
+  try {
+    // 1. Fetch email to find the user in Colovo DB
+    const [userRows] = await db.promise().query('SELECT email FROM user_identities WHERE id = ?', [userId]);
+    
+    if (userRows.length > 0) {
+      const email = userRows[0].email;
+      const colovoDb = require('../config/db').colovoPromise;
+      
+      // 2. Delete from Colovo Workspace DB
+      try {
+        await colovoDb.query('DELETE FROM users WHERE email = ?', [email]);
+        console.log(`[Workspace Sync] Deleted user ${email} from Colovo DB.`);
+      } catch (colovoErr) {
+        console.error(`[Workspace Sync Error] Failed to delete user ${email} from Colovo DB:`, colovoErr.message);
+      }
+    }
+
+    // 3. Delete from local ERP (cascading deletes handle profile tables)
+    await db.promise().query('DELETE FROM user_identities WHERE id = ?', [userId]);
+    
+    res.json({ success: true, message: 'User and linked profiles deleted successfully from ERP and Workspace' });
+  } catch (err) {
+    console.error('Error deleting user:', err);
+    res.status(500).json({ success: false, message: 'Error deleting user' });
+  }
 });
 
 // Update employee role (Promote/Demote)
