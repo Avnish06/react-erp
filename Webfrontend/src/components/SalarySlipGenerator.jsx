@@ -113,31 +113,59 @@ export default function SalarySlipGenerator({ payroll = null, onClose }) {
     return str ? str + 'Rupees Only' : 'Zero Rupees';
   };
 
-  const handleDownloadPDF = async () => {
-    const element = document.getElementById('salary-slip-content');
-    if (!element) return;
-    toast.info('Generating PDF quality slip...');
-    
-    try {
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        scrollX: 0,
-        scrollY: 0
-      });
-      const imgData = canvas.toDataURL('image/png', 1.0);
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgWidth = 210;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      
-      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-      pdf.save(`Salary_Slip_${slip.employeeName.replace(/\s+/g, '_')}_${slip.monthYear}.pdf`);
-      toast.success('Salary Slip PDF Downloaded!');
-    } catch (e) {
-      console.error("PDF Generation Error:", e);
-      toast.error('Failed to generate PDF download.');
-    }
+  const handleDownloadPDF = () => {
+    toast.info('Preparing PDF quality slip...');
+    const content = document.getElementById('salary-slip-content');
+    if (!content) return;
+
+    // Create a hidden iframe
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    document.body.appendChild(iframe);
+
+    // Get styles to inject
+    const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
+      .map(el => el.outerHTML)
+      .join('\n');
+
+    const iframeDoc = iframe.contentWindow.document;
+    iframeDoc.open();
+    iframeDoc.write(`
+      <html>
+        <head>
+          <title>Salary_Slip_${slip.employeeName.replace(/\s+/g, '_')}_${slip.monthYear}</title>
+          ${styles}
+          <style>
+            @media print {
+              body { -webkit-print-color-adjust: exact; print-color-adjust: exact; margin: 0; padding: 20px; }
+              @page { size: A4 portrait; margin: 0; }
+            }
+          </style>
+        </head>
+        <body style="background: white;">
+          ${content.outerHTML}
+        </body>
+      </html>
+    `);
+    iframeDoc.close();
+
+    // Wait for styles/fonts to apply then print
+    setTimeout(() => {
+      try {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+        setTimeout(() => document.body.removeChild(iframe), 1000);
+        toast.success('Print dialog opened successfully!');
+      } catch (err) {
+        toast.error('Failed to open print dialog');
+        console.error(err);
+      }
+    }, 500);
   };
 
   return (
