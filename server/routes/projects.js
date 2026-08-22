@@ -409,17 +409,23 @@ router.put('/:id', verifyToken, async (req, res) => {
 
     res.json({ success: true, message: 'Project updated' });
   } catch (err) {
-    console.error('Error updating project:', err);
-    res.status(500).json({ success: false, message: 'Error updating project' });
+    console.error('Error updating project:', err.message, err.sqlMessage || '');
+    res.status(500).json({ success: false, message: 'Error updating project: ' + (err.sqlMessage || err.message) });
   }
 });
 
 // Delete project
-router.delete('/:id', verifyToken, (req, res) => {
-  db.query('DELETE FROM projects WHERE id = ?', [req.params.id], (err, result) => {
-    if (err) return res.status(500).json({ success: false, message: 'Error deleting project' });
-    res.json({ success: true, message: 'Project deleted' });
-  });
+router.delete('/:id', verifyToken, async (req, res) => {
+  try {
+    // 1. Delete associated tasks first to prevent foreign key constraint errors
+    await db.promise.query('DELETE FROM tasks WHERE project_id = ?', [req.params.id]);
+    // 2. Delete the project
+    await db.promise.query('DELETE FROM projects WHERE id = ?', [req.params.id]);
+    res.json({ success: true, message: 'Project and associated tasks deleted' });
+  } catch (err) {
+    console.error('Error deleting project:', err.message, err.sqlMessage || '');
+    res.status(500).json({ success: false, message: 'Error deleting project: ' + (err.sqlMessage || err.message) });
+  }
 });
 
 module.exports = router;

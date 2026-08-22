@@ -512,7 +512,7 @@ const ProjectManagement = ({ initialTab = 'overview' }) => {
       }
       fetchAll();
     } catch (err) {
-      toast.error('Error updating status');
+      toast.error(err.response?.data?.message || 'Error updating status');
     }
   };
 
