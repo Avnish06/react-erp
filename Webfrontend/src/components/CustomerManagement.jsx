@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import {
   Users, Search, Filter, Plus, Briefcase,
   Layers, TrendingUp, Building2, Mail,
-  Phone, ChevronRight, MoreVertical, Edit, Eye, Send, X, FileText, Sparkles
+  Phone, ChevronRight, MoreVertical, Edit, Eye, Send, X, FileText, Sparkles, Trash2
 } from 'lucide-react';
 
 const CustomerManagement = ({ onNavigate }) => {
@@ -133,6 +133,19 @@ const CustomerManagement = ({ onNavigate }) => {
       toast.error(err.response?.data?.message || 'Failed to send proposal email');
     } finally {
       setSendingProposal(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this customer?')) return;
+    try {
+      const res = await axios.delete(`/api/customers/${id}`);
+      if (res.data.success) {
+        toast.success('Customer deleted successfully');
+        fetchCustomers();
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Error deleting customer');
     }
   };
 
@@ -269,6 +282,13 @@ const CustomerManagement = ({ onNavigate }) => {
                         className="p-2 text-gray-400 hover:text-orange-600 hover:bg-white rounded-lg transition-all shadow-sm"
                       >
                         <Edit size={18} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(customer.id)}
+                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all shadow-sm"
+                        title="Delete Customer"
+                      >
+                        <Trash2 size={18} />
                       </button>
                       <button
                         onClick={() => onNavigate(`CustomerDetail_${customer.id}`)}
