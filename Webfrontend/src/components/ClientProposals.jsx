@@ -189,9 +189,13 @@ const ClientProposals = () => {
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(75, 85, 99);
-    doc.text(`Proposal ID: [HT-PR-2026-${String(p.id).padStart(3, '0')}]`, 195, 28, { align: 'right' });
-    doc.text(`Date: [${new Date(p.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}]`, 195, 33, { align: 'right' });
-    doc.text(`Validity: [30 Days]`, 195, 38, { align: 'right' });
+    
+    const proposalIdStr = `HT-PR-${new Date(p.created_at || Date.now()).getFullYear()}-${String(p.id).padStart(3, '0')}`;
+    const dateStr = new Date(p.created_at || Date.now()).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    
+    doc.text(`Proposal ID: ${proposalIdStr}`, 195, 28, { align: 'right' });
+    doc.text(`Date: ${dateStr}`, 195, 33, { align: 'right' });
+    doc.text(`Validity: 30 Days`, 195, 38, { align: 'right' });
     
     doc.setDrawColor(229, 231, 235);
     doc.setLineWidth(0.5);
@@ -210,47 +214,40 @@ const ClientProposals = () => {
     doc.setFont('helvetica', 'bold');
     doc.text('Prepared For:', 15, 60);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Client Name / Company: [${p.client_name}]`, 15, 65);
-    doc.text(`Kind Attn: [${p.client_name}]`, 15, 70);
-    doc.text(`Email / Phone: [${p.client_email || 'N/A'}]`, 15, 75);
+    doc.text(`Client / Company: ${p.client_name}`, 15, 65);
+    doc.text(`Email / Contact: ${p.client_email || 'N/A'}`, 15, 70);
 
     // Prepared By
     doc.setFont('helvetica', 'bold');
     doc.text('Prepared By:', 105, 60);
     doc.setFont('helvetica', 'normal');
-    doc.text('Company Name: Hatbaliya Technologies', 105, 65);
+    doc.text('Company: Hatbaliya Technologies', 105, 65);
     doc.text('Lead Specialist: Avnish Kumar', 105, 70);
-    doc.text('Location: Rajendra Park, Gurgaon, Haryana, India', 105, 75);
-    doc.text('Contact: contact@hatbaliya.com', 105, 80);
+    doc.text('Location: Gurgaon, Haryana, India', 105, 75);
 
     // Project Statement
     doc.setFont('helvetica', 'bold');
-    doc.text('Project Statement:', 15, 90);
+    doc.text('Project Statement:', 15, 85);
     doc.setFont('helvetica', 'normal');
-    const statement = "Hatbaliya Technologies is pleased to submit this proposal for engineering a custom, high-performance Web Application. Our goal is to design and implement a scalable, secure, and user-centric digital solution using modern MERN stack architecture (MongoDB, Express.js, React.js, Node.js) tailored specifically to streamline your business operations.";
-    doc.text(doc.splitTextToSize(statement, 180), 15, 95);
+    const statement = `Hatbaliya Technologies is pleased to submit this proposal for ${p.project_name}. Our goal is to design and implement a scalable, secure, and tailored digital solution to streamline your business operations and meet your specific requirements.`;
+    doc.text(doc.splitTextToSize(statement, 180), 15, 90);
 
     // 2. Scope of Services & Key Deliverables
     doc.setFontSize(12);
     doc.setTextColor(17, 24, 39);
     doc.setFont('helvetica', 'bold');
-    doc.text('2. Scope of Services & Key Deliverables', 15, 115);
+    doc.text('2. Scope of Services & Key Deliverables', 15, 105);
 
     doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
     doc.setTextColor(55, 65, 81);
-    const scopeBullets = [
-      "• System Architecture & Database Design: Modular Node.js backend infrastructure backed by optimized MongoDB schemas, indexing, and RESTful API architecture.",
-      "• Frontend UI/UX Interface: Interactive, state-driven user interface built with React.js featuring responsive mobile-first layouts.",
-      "• Authentication & Security: Enterprise-grade JWT/OAuth authentication, role-based access control (RBAC), and SSL data encryption.",
-      "• Quality Assurance & Optimization: Rigorous cross-browser testing, UI responsiveness audits, load handling, and speed optimization.",
-      "• Deployment & Cloud Integration: Automated CI/CD pipeline deployment to AWS/Cloud hosting with real-time error logging and monitoring."
-    ];
-    let scopeY = 122;
-    scopeBullets.forEach(bullet => {
-      const splitBullet = doc.splitTextToSize(bullet, 175);
-      doc.text(splitBullet, 20, scopeY);
-      scopeY += (splitBullet.length * 4.5) + 2;
-    });
+    
+    // Using dynamic details from the form
+    const dynamicScope = p.details || "• System Architecture & Database Design\n• Frontend UI/UX Interface\n• Authentication & Security\n• Quality Assurance & Optimization\n• Deployment & Cloud Integration";
+    const splitScope = doc.splitTextToSize(dynamicScope, 180);
+    doc.text(splitScope, 15, 112);
+    
+    let scopeY = 112 + (splitScope.length * 4.5);
 
     // 3. Implementation Roadmap & Milestones
     doc.setFontSize(12);
@@ -260,13 +257,11 @@ const ClientProposals = () => {
 
     autoTable(doc, {
       startY: scopeY + 12,
-      head: [['Phase', 'Deliverable Phase Description', 'Estimated Timeline', 'Target']],
+      head: [['Phase', 'Deliverable Phase Description', 'Estimated Timeline']],
       body: [
-        ['Phase 01', 'Requirements Gathering, Wireframing & System Design', '2 Weeks', 'Week 2'],
-        ['Phase 02', 'Backend RESTful API Engine & Database Setup', '3 Weeks', 'Week 5'],
-        ['Phase 03', 'Frontend UI Engineering & API Integration', '3 Weeks', 'Week 8'],
-        ['Phase 04', 'End-to-End QA Testing & Security Audits', '2 Weeks', 'Week 10'],
-        ['Phase 05', 'Production Deployment & Final Go-Live Support', '1 Week', 'Week 11']
+        ['Phase 01', 'Requirements Gathering, Design & Planning', 'Week 1-2'],
+        ['Phase 02', 'Core Development & Integration', 'Week 3-5'],
+        ['Phase 03', 'End-to-End QA Testing & Final Deployment', 'Week 6']
       ],
       theme: 'grid',
       headStyles: { fillColor: [243, 244, 246], textColor: [17, 24, 39], fontStyle: 'bold', fontSize: 9 },
@@ -287,16 +282,17 @@ const ClientProposals = () => {
     doc.setFont('helvetica', 'bold');
     doc.text('4. Commercial Investment & Payment Terms', 15, finalY);
 
+    const formattedValue = `Rs. ${Number(p.value).toLocaleString('en-IN')}`;
+
     autoTable(doc, {
       startY: finalY + 4,
       head: [['Module Description', 'Billing Type', 'Amount (INR)']],
       body: [
-        ['Full-Stack Web Application Engineering (React & Node.js Architecture)', 'Milestone-based', '₹2,50,000'],
-        ['Database Architecture & Cloud Infrastructure Setup', 'Milestone-based', '₹80,000'],
-        ['Quality Assurance, System Testing & Documentation', 'Milestone-based', '₹40,000'],
-        ['12-Month Post-Launch Maintenance & Technical Support', 'Annual SLA', '₹50,000'],
+        [`${p.project_name} - Core Implementation`, 'Project-based', formattedValue],
+        ['Quality Assurance & Technical Documentation', 'Included', '---'],
+        ['Post-Launch Support (As per terms)', 'Included', '---'],
       ],
-      foot: [['Total Estimated Investment', '', '₹4,20,000']],
+      foot: [['Total Estimated Investment', '', formattedValue]],
       theme: 'grid',
       headStyles: { fillColor: [243, 244, 246], textColor: [17, 24, 39], fontStyle: 'bold', fontSize: 9 },
       bodyStyles: { fontSize: 9, textColor: [55, 65, 81] },
@@ -309,18 +305,15 @@ const ClientProposals = () => {
 
     doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
-    doc.text('Payment Milestone Schedule:', 15, finalY);
+    doc.text('Payment Terms & Conditions:', 15, finalY);
     doc.setFont('helvetica', 'normal');
-    const paymentTerms = [
-      "• 30% Advance Retainer upon contract execution.",
-      "• 40% Milestone Payment upon completion of Phase 03 (Frontend & Backend Integration).",
-      "• 30% Final Payment upon completion of User Acceptance Testing (UAT) and deployment."
-    ];
-    let pyY = finalY + 5;
-    paymentTerms.forEach(pt => {
-      doc.text(pt, 20, pyY);
-      pyY += 5;
-    });
+    
+    // Using dynamic terms from the form
+    const dynamicTerms = p.terms || defaultTerms;
+    const splitTerms = doc.splitTextToSize(dynamicTerms, 180);
+    doc.text(splitTerms, 15, finalY + 6);
+    
+    let pyY = finalY + 6 + (splitTerms.length * 4.5);
 
     // 5. Acceptance & Authorization
     if (pyY > 220) {
@@ -348,14 +341,14 @@ const ClientProposals = () => {
     doc.setFont('helvetica', 'normal');
     doc.text('Signature: ___________________________', 15, pyY + 8);
     doc.text('Name: Avnish Kumar', 15, pyY + 16);
-    doc.text('Date: August 22, 2026', 15, pyY + 24);
+    doc.text(`Date: ${dateStr}`, 15, pyY + 24);
 
     // Client Signature
     doc.setFont('helvetica', 'bold');
     doc.text('Client Acceptance', 115, pyY);
     doc.setFont('helvetica', 'normal');
     doc.text('Signature: ___________________________', 115, pyY + 8);
-    doc.text(`Name: [${p.client_name}]`, 115, pyY + 16);
+    doc.text(`Name: ${p.client_name}`, 115, pyY + 16);
     doc.text('Date: ________________', 115, pyY + 24);
 
     // Footer
