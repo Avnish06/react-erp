@@ -14,40 +14,40 @@ export default function SalarySlipGenerator({ payroll = null, onClose }) {
     email: 'info@hatbaliyatechnologies.com',
     website: 'www.hatbaliyatechnologies.com',
     gstin: '09ABCDE1234F1Z5',
-    monthYear: 'May 2024',
-    employeeId: 'HT/EMP/2024/015',
-    joiningDate: '01-Jan-2023',
-    department: 'IT - Development',
-    designation: 'Software Developer',
+    monthYear: '',
+    employeeId: '',
+    joiningDate: '',
+    department: '',
+    designation: '',
     payMode: 'Bank Transfer',
     workingDays: 26,
-    paymentDate: '31-May-2024',
-    employeeName: 'Aashu Sharma',
-    fatherName: 'Rajesh Sharma',
-    employeeCode: 'HT015',
-    location: 'Noida',
-    bankName: 'HDFC Bank',
-    bankAcc: '50200012345678',
-    ifscCode: 'HDFC0001234',
-    panNo: 'ABCPS1234D',
-    uanNo: '101234567894',
+    paymentDate: '',
+    employeeName: '',
+    fatherName: '',
+    employeeCode: '',
+    location: '',
+    bankName: '',
+    bankAcc: '',
+    ifscCode: '',
+    panNo: '',
+    uanNo: '',
     
     // Earnings
-    basicSalary: 35000,
-    hra: 14000,
-    conveyance: 2000,
-    specialAllowance: 6000,
-    medicalAllowance: 1250,
-    lta: 1000,
-    otherAllowance: 750,
+    basicSalary: 0,
+    hra: 0,
+    conveyance: 0,
+    specialAllowance: 0,
+    medicalAllowance: 0,
+    lta: 0,
+    otherAllowance: 0,
 
     // Deductions
-    pf: 4200,
-    esi: 135,
-    profTax: 200,
-    tds: 5250,
+    pf: 0,
+    esi: 0,
+    profTax: 0,
+    tds: 0,
     leaveDeduction: 0,
-    otherDeduction: 215,
+    otherDeduction: 0,
   });
 
   useEffect(() => {
@@ -56,11 +56,11 @@ export default function SalarySlipGenerator({ payroll = null, onClose }) {
         ...prev,
         employeeName: payroll.employee_name || prev.employeeName,
         monthYear: payroll.month_year || prev.monthYear,
-        basicSalary: Number(payroll.basic_salary) || prev.basicSalary,
-        hra: Number(payroll.hra) || prev.hra,
-        conveyance: Number(payroll.da) || prev.conveyance, // da mapped to conveyance
-        specialAllowance: Number(payroll.bonus) || prev.specialAllowance, // bonus mapped to special
-        otherDeduction: Number(payroll.deductions) || prev.otherDeduction,
+        basicSalary: Number(payroll.basic_salary) || 0,
+        hra: Number(payroll.hra) || 0,
+        conveyance: Number(payroll.da) || 0, // da mapped to conveyance
+        specialAllowance: Number(payroll.bonus) || 0, // bonus mapped to special
+        otherDeduction: Number(payroll.deductions) || 0,
       }));
     }
   }, [payroll]);
@@ -173,237 +173,216 @@ export default function SalarySlipGenerator({ payroll = null, onClose }) {
         </div>
 
         {/* Print Content Area */}
-        <div className="flex-1 overflow-y-auto w-full">
-          <div id="salary-slip-content" className="bg-white p-8 md:p-10 font-sans text-blue-900 text-[11px] leading-relaxed relative" style={{ width: '794px', minHeight: '1123px', margin: '0 auto' }}>
+        <div className="flex-1 overflow-y-auto w-full bg-slate-100 p-8">
+          <div id="salary-slip-content" className="bg-white font-sans text-slate-800 text-[11px] leading-relaxed relative shadow-2xl overflow-hidden" style={{ width: '794px', minHeight: '1123px', margin: '0 auto', borderTop: '8px solid #0f172a' }}>
           
-          {/* Top Banner Accent */}
-          <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-blue-700 to-indigo-900" />
-
           {/* Header */}
-          <div className="flex justify-between items-start border-b border-gray-100 pb-6 mb-6">
-            <div className="space-y-2">
-              <div className="flex items-center gap-3">
-                <img src={logoImg} alt="Company Logo" className="h-10 object-contain" />
-                <span className="text-xl font-black tracking-tight text-orange-950">HATBALIYA <span className="text-orange-600 font-bold">TECHNOLOGIES</span></span>
+          <div className="flex justify-between items-start p-10 pb-6 mb-6">
+            <div className="space-y-2 flex-1">
+              <div className="flex items-center gap-4">
+                <img src={logoImg} alt="Company Logo" className="h-12 object-contain" />
+                <div>
+                  <span className="text-2xl font-black tracking-tight text-slate-900">HATBALIYA <span className="text-blue-700 font-bold">TECHNOLOGIES</span></span>
+                  <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">{slip.tagline}</p>
+                </div>
               </div>
-              <p className="text-[10px] text-gray-400 font-semibold italic -mt-1">{slip.tagline}</p>
               
-              <div className="text-[10px] text-slate-500 space-y-0.5 pt-2">
-                <p>📍 {slip.address}</p>
-                <p>📞 {slip.phone} · ✉️ {slip.email}</p>
-                <p>🌐 {slip.website} · <span className="font-bold">GSTIN:</span> {slip.gstin}</p>
+              <div className="text-[10px] text-slate-500 space-y-1 pt-4 font-medium border-l-2 border-slate-200 pl-4">
+                <p>{slip.address}</p>
+                <p>📞 {slip.phone} &nbsp;·&nbsp; ✉️ {slip.email}</p>
+                <p>🌐 {slip.website} &nbsp;·&nbsp; <span className="font-bold text-slate-700">GSTIN: {slip.gstin}</span></p>
               </div>
             </div>
 
-            <div className="text-right space-y-2">
-              <span className="inline-block bg-orange-900 text-white px-5 py-2 font-black text-sm rounded-bl-2xl uppercase tracking-wider">Salary Slip</span>
+            <div className="text-right space-y-2 flex-1 flex flex-col items-end">
+              <div className="bg-slate-900 text-white px-6 py-2.5 rounded-l-full font-black text-lg tracking-[0.2em] shadow-lg mb-4 -mr-10">
+                SALARY SLIP
+              </div>
               <div>
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">For the Month of</p>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">For the Month of</p>
                 {isEditing ? (
-                  <input type="text" name="monthYear" value={slip.monthYear} onChange={handleFieldChange} className="border px-2 py-0.5 rounded text-right w-28 mt-0.5" />
+                  <input type="text" name="monthYear" value={slip.monthYear} onChange={handleFieldChange} className="border-b-2 border-slate-900 bg-slate-50 px-2 py-1 outline-none text-right w-40 text-sm font-bold text-slate-900" placeholder="e.g. May 2024" />
                 ) : (
-                  <p className="text-sm font-black text-orange-700">{slip.monthYear}</p>
+                  <p className="text-lg font-black text-slate-900 border-b-2 border-slate-900 inline-block pb-1">{slip.monthYear || 'N/A'}</p>
                 )}
               </div>
             </div>
           </div>
 
-          {/* Metadata Tables */}
-          <div className="grid grid-cols-2 gap-8 mb-6">
-            
-            {/* Employee info */}
-            <div className="bg-slate-50/50 p-4 rounded-xl border border-gray-100 grid grid-cols-3 gap-y-2">
-              <span className="text-gray-400 font-semibold col-span-1">Employee Name</span>
-              <span className="col-span-2 font-bold text-blue-950">: {isEditing ? <input name="employeeName" value={slip.employeeName} onChange={handleFieldChange} className="border px-1.5 py-0.5 rounded w-full" /> : slip.employeeName}</span>
+          <div className="px-10">
+            {/* Metadata Tables */}
+            <div className="grid grid-cols-2 gap-6 mb-8">
               
-              <span className="text-gray-400 font-semibold col-span-1">Father's Name</span>
-              <span className="col-span-2 font-medium text-gray-700">: {isEditing ? <input name="fatherName" value={slip.fatherName} onChange={handleFieldChange} className="border px-1.5 py-0.5 rounded w-full" /> : slip.fatherName}</span>
-              
-              <span className="text-gray-400 font-semibold col-span-1">Employee Code</span>
-              <span className="col-span-2 font-mono text-gray-700">: {isEditing ? <input name="employeeCode" value={slip.employeeCode} onChange={handleFieldChange} className="border px-1.5 py-0.5 rounded w-full" /> : slip.employeeCode}</span>
-              
-              <span className="text-gray-400 font-semibold col-span-1">Location</span>
-              <span className="col-span-2 text-gray-700">: {isEditing ? <input name="location" value={slip.location} onChange={handleFieldChange} className="border px-1.5 py-0.5 rounded w-full" /> : slip.location}</span>
-            </div>
-
-            {/* General Work metadata */}
-            <div className="bg-slate-50/50 p-4 rounded-xl border border-gray-100 grid grid-cols-3 gap-y-1.5 h-fit">
-              <span className="text-gray-400 font-semibold col-span-1">Employee ID</span>
-              <span className="col-span-2 font-mono text-gray-700">: {isEditing ? <input name="employeeId" value={slip.employeeId} onChange={handleFieldChange} className="border px-1.5 py-0.5 rounded w-full" /> : slip.employeeId}</span>
-              
-              <span className="text-gray-400 font-semibold col-span-1">Date of Joining</span>
-              <span className="col-span-2 text-gray-700">: {isEditing ? <input name="joiningDate" value={slip.joiningDate} onChange={handleFieldChange} className="border px-1.5 py-0.5 rounded w-full" /> : slip.joiningDate}</span>
-              
-              <span className="text-gray-400 font-semibold col-span-1">Department</span>
-              <span className="col-span-2 text-gray-700">: {isEditing ? <input name="department" value={slip.department} onChange={handleFieldChange} className="border px-1.5 py-0.5 rounded w-full" /> : slip.department}</span>
-              
-              <span className="text-gray-400 font-semibold col-span-1">Designation</span>
-              <span className="col-span-2 text-gray-700">: {isEditing ? <input name="designation" value={slip.designation} onChange={handleFieldChange} className="border px-1.5 py-0.5 rounded w-full" /> : slip.designation}</span>
-
-              <span className="text-gray-400 font-semibold col-span-1">Pay Mode</span>
-              <span className="col-span-2 text-gray-700">: {isEditing ? <input name="payMode" value={slip.payMode} onChange={handleFieldChange} className="border px-1.5 py-0.5 rounded w-full" /> : slip.payMode}</span>
-
-              <span className="text-gray-400 font-semibold col-span-1">Working Days</span>
-              <span className="col-span-2 text-gray-700">: {isEditing ? <input type="number" name="workingDays" value={slip.workingDays} onChange={handleFieldChange} className="border px-1.5 py-0.5 rounded w-20" /> : slip.workingDays}</span>
-
-              <span className="text-gray-400 font-semibold col-span-1">Payment Date</span>
-              <span className="col-span-2 text-gray-700">: {isEditing ? <input name="paymentDate" value={slip.paymentDate} onChange={handleFieldChange} className="border px-1.5 py-0.5 rounded w-full" /> : slip.paymentDate}</span>
-            </div>
-          </div>
-
-          {/* Bank metadata table block */}
-          <div className="bg-slate-50/50 p-4 rounded-xl border border-gray-100 grid grid-cols-4 gap-y-2 mb-6">
-            <span className="text-gray-400 font-semibold">Bank Name</span>
-            <span className="font-bold text-gray-700">: {isEditing ? <input name="bankName" value={slip.bankName} onChange={handleFieldChange} className="border px-1.5 py-0.5 rounded w-full" /> : slip.bankName}</span>
-
-            <span className="text-gray-400 font-semibold pl-4">Bank A/C No.</span>
-            <span className="font-mono text-gray-700">: {isEditing ? <input name="bankAcc" value={slip.bankAcc} onChange={handleFieldChange} className="border px-1.5 py-0.5 rounded w-full" /> : slip.bankAcc}</span>
-
-            <span className="text-gray-400 font-semibold">IFSC Code</span>
-            <span className="font-mono text-gray-700">: {isEditing ? <input name="ifscCode" value={slip.ifscCode} onChange={handleFieldChange} className="border px-1.5 py-0.5 rounded w-full" /> : slip.ifscCode}</span>
-
-            <span className="text-gray-400 font-semibold pl-4">PAN No.</span>
-            <span className="font-mono text-gray-700">: {isEditing ? <input name="panNo" value={slip.panNo} onChange={handleFieldChange} className="border px-1.5 py-0.5 rounded w-full" /> : slip.panNo}</span>
-
-            <span className="text-gray-400 font-semibold">UAN No.</span>
-            <span className="font-mono text-gray-700" colSpan={3}>: {isEditing ? <input name="uanNo" value={slip.uanNo} onChange={handleFieldChange} className="border px-1.5 py-0.5 rounded w-full" /> : slip.uanNo}</span>
-          </div>
-
-          {/* Earning & Deduction Side-by-side Table */}
-          <div className="grid grid-cols-2 border border-gray-200 rounded-xl overflow-hidden mb-6">
-            
-            {/* Earnings Column */}
-            <div className="border-r border-gray-200">
-              <div className="bg-orange-900 text-white font-bold p-2 px-4 flex justify-between uppercase">
-                <span>Earnings Description</span>
-                <span>Amount (₹)</span>
+              {/* Employee info */}
+              <div className="bg-slate-50 p-5 rounded-lg border border-slate-200 grid grid-cols-[110px_1fr] gap-y-3 shadow-sm">
+                <span className="text-slate-500 font-bold uppercase text-[9px] tracking-wider self-center">Employee Name</span>
+                <span className="font-bold text-slate-900 text-sm">{isEditing ? <input name="employeeName" value={slip.employeeName} onChange={handleFieldChange} className="border-b border-slate-300 bg-transparent px-1 py-0.5 outline-none w-full" placeholder="Full Name" /> : (slip.employeeName || '-')}</span>
+                
+                <span className="text-slate-500 font-bold uppercase text-[9px] tracking-wider self-center">Father's Name</span>
+                <span className="font-medium text-slate-700">{isEditing ? <input name="fatherName" value={slip.fatherName} onChange={handleFieldChange} className="border-b border-slate-300 bg-transparent px-1 py-0.5 outline-none w-full" placeholder="Father's Name" /> : (slip.fatherName || '-')}</span>
+                
+                <span className="text-slate-500 font-bold uppercase text-[9px] tracking-wider self-center">Employee Code</span>
+                <span className="font-mono text-slate-700 font-semibold">{isEditing ? <input name="employeeCode" value={slip.employeeCode} onChange={handleFieldChange} className="border-b border-slate-300 bg-transparent px-1 py-0.5 outline-none w-full" placeholder="EMP-000" /> : (slip.employeeCode || '-')}</span>
+                
+                <span className="text-slate-500 font-bold uppercase text-[9px] tracking-wider self-center">Location</span>
+                <span className="text-slate-700 font-medium">{isEditing ? <input name="location" value={slip.location} onChange={handleFieldChange} className="border-b border-slate-300 bg-transparent px-1 py-0.5 outline-none w-full" placeholder="City/Branch" /> : (slip.location || '-')}</span>
               </div>
-              
-              <div className="divide-y divide-gray-100">
-                {[
-                  { label: 'Basic Salary', name: 'basicSalary' },
-                  { label: 'House Rent Allowance (HRA)', name: 'hra' },
-                  { label: 'Conveyance Allowance', name: 'conveyance' },
-                  { label: 'Special Allowance', name: 'specialAllowance' },
-                  { label: 'Medical Allowance', name: 'medicalAllowance' },
-                  { label: 'Leave Travel Allowance (LTA)', name: 'lta' },
-                  { label: 'Other Allowance', name: 'otherAllowance' },
-                ].map((item, idx) => (
-                  <div key={idx} className="flex justify-between items-center p-2.5 px-4 bg-white">
-                    <span className="text-slate-600 font-semibold">{item.label}</span>
-                    <span className="font-bold text-blue-900">
-                      {isEditing ? (
-                        <input type="number" name={item.name} value={slip[item.name]} onChange={handleFieldChange} className="border px-1 py-0.5 rounded w-20 text-right" />
-                      ) : (
-                        Number(slip[item.name]).toFixed(2)
-                      )}
-                    </span>
-                  </div>
-                ))}
+
+              {/* General Work metadata */}
+              <div className="bg-slate-50 p-5 rounded-lg border border-slate-200 grid grid-cols-[100px_1fr] gap-y-2.5 shadow-sm">
+                <span className="text-slate-500 font-bold uppercase text-[9px] tracking-wider self-center">Employee ID</span>
+                <span className="font-mono text-slate-700 font-semibold">{isEditing ? <input name="employeeId" value={slip.employeeId} onChange={handleFieldChange} className="border-b border-slate-300 bg-transparent px-1 py-0.5 outline-none w-full" placeholder="HT/EMP/000" /> : (slip.employeeId || '-')}</span>
+                
+                <span className="text-slate-500 font-bold uppercase text-[9px] tracking-wider self-center">Date of Joining</span>
+                <span className="text-slate-700 font-medium">{isEditing ? <input name="joiningDate" value={slip.joiningDate} onChange={handleFieldChange} className="border-b border-slate-300 bg-transparent px-1 py-0.5 outline-none w-full" placeholder="DD-MMM-YYYY" /> : (slip.joiningDate || '-')}</span>
+                
+                <span className="text-slate-500 font-bold uppercase text-[9px] tracking-wider self-center">Department</span>
+                <span className="text-slate-700 font-medium">{isEditing ? <input name="department" value={slip.department} onChange={handleFieldChange} className="border-b border-slate-300 bg-transparent px-1 py-0.5 outline-none w-full" placeholder="Department" /> : (slip.department || '-')}</span>
+                
+                <span className="text-slate-500 font-bold uppercase text-[9px] tracking-wider self-center">Designation</span>
+                <span className="text-slate-700 font-medium">{isEditing ? <input name="designation" value={slip.designation} onChange={handleFieldChange} className="border-b border-slate-300 bg-transparent px-1 py-0.5 outline-none w-full" placeholder="Designation" /> : (slip.designation || '-')}</span>
+                
+                <span className="text-slate-500 font-bold uppercase text-[9px] tracking-wider self-center">Working Days</span>
+                <div className="flex gap-4">
+                  <span className="text-slate-700 font-medium flex-1">{isEditing ? <input type="number" name="workingDays" value={slip.workingDays} onChange={handleFieldChange} className="border-b border-slate-300 bg-transparent px-1 py-0.5 outline-none w-full" /> : (slip.workingDays || '0')}</span>
+                  <span className="text-slate-500 font-bold uppercase text-[9px] tracking-wider self-center">Pay Date:</span>
+                  <span className="text-slate-700 font-medium flex-1">{isEditing ? <input name="paymentDate" value={slip.paymentDate} onChange={handleFieldChange} className="border-b border-slate-300 bg-transparent px-1 py-0.5 outline-none w-full" placeholder="DD-MMM-YYYY" /> : (slip.paymentDate || '-')}</span>
+                </div>
               </div>
             </div>
 
-            {/* Deductions Column */}
-            <div>
-              <div className="bg-orange-900 text-white font-bold p-2 px-4 flex justify-between uppercase">
-                <span>Deductions Description</span>
-                <span>Amount (₹)</span>
+            {/* Bank metadata table block */}
+            <div className="bg-white p-4 rounded-lg border border-slate-200 grid grid-cols-4 gap-y-3 mb-8 shadow-sm">
+              <span className="text-slate-500 font-bold uppercase text-[9px] tracking-wider self-center">Bank Name</span>
+              <span className="font-bold text-slate-800">{isEditing ? <input name="bankName" value={slip.bankName} onChange={handleFieldChange} className="border-b border-slate-300 bg-transparent px-1 py-0.5 outline-none w-full" placeholder="Bank Name" /> : (slip.bankName || '-')}</span>
+
+              <span className="text-slate-500 font-bold uppercase text-[9px] tracking-wider self-center pl-4 border-l border-slate-100">Bank A/C No.</span>
+              <span className="font-mono font-semibold text-slate-800">{isEditing ? <input name="bankAcc" value={slip.bankAcc} onChange={handleFieldChange} className="border-b border-slate-300 bg-transparent px-1 py-0.5 outline-none w-full" placeholder="Account Number" /> : (slip.bankAcc || '-')}</span>
+
+              <span className="text-slate-500 font-bold uppercase text-[9px] tracking-wider self-center">IFSC Code</span>
+              <span className="font-mono font-semibold text-slate-800">{isEditing ? <input name="ifscCode" value={slip.ifscCode} onChange={handleFieldChange} className="border-b border-slate-300 bg-transparent px-1 py-0.5 outline-none w-full" placeholder="IFSC Code" /> : (slip.ifscCode || '-')}</span>
+
+              <span className="text-slate-500 font-bold uppercase text-[9px] tracking-wider self-center pl-4 border-l border-slate-100">PAN No.</span>
+              <span className="font-mono font-semibold text-slate-800">{isEditing ? <input name="panNo" value={slip.panNo} onChange={handleFieldChange} className="border-b border-slate-300 bg-transparent px-1 py-0.5 outline-none w-full" placeholder="PAN Number" /> : (slip.panNo || '-')}</span>
+
+              <span className="text-slate-500 font-bold uppercase text-[9px] tracking-wider self-center">UAN No.</span>
+              <span className="font-mono font-semibold text-slate-800" colSpan={3}>{isEditing ? <input name="uanNo" value={slip.uanNo} onChange={handleFieldChange} className="border-b border-slate-300 bg-transparent px-1 py-0.5 outline-none w-64" placeholder="UAN Number" /> : (slip.uanNo || '-')}</span>
+            </div>
+
+            {/* Earning & Deduction Side-by-side Table */}
+            <div className="grid grid-cols-2 rounded-lg overflow-hidden mb-6 shadow-md border border-slate-200 bg-white">
+              
+              {/* Earnings Column */}
+              <div className="border-r border-slate-200 flex flex-col">
+                <div className="bg-slate-900 text-white p-3 px-5 flex justify-between uppercase tracking-widest text-[10px]">
+                  <span className="font-black">Earnings Description</span>
+                  <span className="font-black">Amount (₹)</span>
+                </div>
+                
+                <div className="divide-y divide-slate-100 flex-1">
+                  {[
+                    { label: 'Basic Salary', name: 'basicSalary' },
+                    { label: 'House Rent Allowance (HRA)', name: 'hra' },
+                    { label: 'Conveyance Allowance', name: 'conveyance' },
+                    { label: 'Special Allowance', name: 'specialAllowance' },
+                    { label: 'Medical Allowance', name: 'medicalAllowance' },
+                    { label: 'Leave Travel Allowance (LTA)', name: 'lta' },
+                    { label: 'Other Allowance', name: 'otherAllowance' },
+                  ].map((item, idx) => (
+                    <div key={idx} className="flex justify-between items-center p-3 px-5 hover:bg-slate-50 transition-colors">
+                      <span className="text-slate-700 font-medium">{item.label}</span>
+                      <span className="font-bold text-slate-900 font-mono">
+                        {isEditing ? (
+                          <input type="number" name={item.name} value={slip[item.name]} onChange={handleFieldChange} className="border border-slate-300 bg-white px-2 py-1 rounded w-24 text-right shadow-inner outline-none focus:border-blue-500" />
+                        ) : (
+                          Number(slip[item.name]).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits:2})
+                        )}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <div className="bg-slate-50 p-4 px-5 flex justify-between uppercase border-t border-slate-200">
+                  <span className="font-bold text-slate-500 text-[10px] tracking-wider">Total Earnings</span>
+                  <span className="font-black text-slate-900 text-sm">₹ {totalEarnings.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits:2})}</span>
+                </div>
               </div>
 
-              <div className="divide-y divide-gray-100">
-                {[
-                  { label: 'Provident Fund (PF)', name: 'pf' },
-                  { label: 'Employee ESI', name: 'esi' },
-                  { label: 'Professional Tax', name: 'profTax' },
-                  { label: 'Income Tax (TDS)', name: 'tds' },
-                  { label: 'Leave Deduction', name: 'leaveDeduction' },
-                  { label: 'Other Deduction', name: 'otherDeduction' },
-                ].map((item, idx) => (
-                  <div key={idx} className="flex justify-between items-center p-2.5 px-4 bg-white">
-                    <span className="text-slate-600 font-semibold">{item.label}</span>
-                    <span className="font-bold text-blue-900">
-                      {isEditing ? (
-                        <input type="number" name={item.name} value={slip[item.name]} onChange={handleFieldChange} className="border px-1 py-0.5 rounded w-20 text-right" />
-                      ) : (
-                        Number(slip[item.name]).toFixed(2)
-                      )}
-                    </span>
-                  </div>
-                ))}
-                {/* Empty rows to balance columns */}
-                <div className="p-2.5 bg-white h-[35px]" />
+              {/* Deductions Column */}
+              <div className="flex flex-col">
+                <div className="bg-slate-900 text-white p-3 px-5 flex justify-between uppercase tracking-widest text-[10px]">
+                  <span className="font-black">Deductions Description</span>
+                  <span className="font-black">Amount (₹)</span>
+                </div>
+
+                <div className="divide-y divide-slate-100 flex-1">
+                  {[
+                    { label: 'Provident Fund (PF)', name: 'pf' },
+                    { label: 'Employee ESI', name: 'esi' },
+                    { label: 'Professional Tax', name: 'profTax' },
+                    { label: 'Income Tax (TDS)', name: 'tds' },
+                    { label: 'Leave Deduction', name: 'leaveDeduction' },
+                    { label: 'Other Deduction', name: 'otherDeduction' },
+                  ].map((item, idx) => (
+                    <div key={idx} className="flex justify-between items-center p-3 px-5 hover:bg-slate-50 transition-colors">
+                      <span className="text-slate-700 font-medium">{item.label}</span>
+                      <span className="font-bold text-slate-900 font-mono">
+                        {isEditing ? (
+                          <input type="number" name={item.name} value={slip[item.name]} onChange={handleFieldChange} className="border border-slate-300 bg-white px-2 py-1 rounded w-24 text-right shadow-inner outline-none focus:border-blue-500" />
+                        ) : (
+                          Number(slip[item.name]).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits:2})
+                        )}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <div className="bg-slate-50 p-4 px-5 flex justify-between uppercase border-t border-slate-200">
+                  <span className="font-bold text-slate-500 text-[10px] tracking-wider">Total Deductions</span>
+                  <span className="font-black text-slate-900 text-sm">₹ {totalDeductions.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits:2})}</span>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Totals Strip */}
-          <div className="grid grid-cols-2 border border-gray-200 rounded-xl overflow-hidden mb-6 bg-slate-50 font-bold">
-            <div className="border-r border-gray-200 p-3 px-4 flex justify-between uppercase text-orange-900">
-              <span>Total Earnings</span>
-              <span>₹ {totalEarnings.toFixed(2)}</span>
-            </div>
-            <div className="p-3 px-4 flex justify-between uppercase text-orange-900">
-              <span>Total Deductions</span>
-              <span>₹ {totalDeductions.toFixed(2)}</span>
-            </div>
-          </div>
-
-          {/* Net pay segment */}
-          <div className="border border-gray-200 rounded-xl overflow-hidden grid grid-cols-3 mb-6">
-            
-            {/* Highlighted Net Pay Card */}
-            <div className="col-span-1 bg-orange-50/50 p-4 border-r border-gray-200 flex flex-col justify-center">
-              <span className="text-orange-900 font-bold uppercase tracking-wider">Net Pay</span>
-              <span className="text-lg font-black text-orange-950 mt-1">₹ {netPay.toLocaleString('en-IN')}.00</span>
-              <span className="text-[9px] text-gray-400 font-semibold mt-0.5">({numberToWords(netPay)})</span>
-            </div>
-
-            {/* Calculations summaries */}
-            <div className="col-span-2 p-4 space-y-2 font-semibold">
-              <div className="flex justify-between text-slate-600">
-                <span>Gross Earnings</span>
-                <span className="text-blue-900">: ₹ {totalEarnings.toFixed(2)}</span>
+            {/* Net pay segment */}
+            <div className="bg-slate-900 rounded-xl overflow-hidden grid grid-cols-[1fr_2fr] mb-12 shadow-xl border border-slate-800 text-white">
+              
+              {/* Highlighted Net Pay Card */}
+              <div className="bg-emerald-600 p-6 flex flex-col justify-center relative overflow-hidden">
+                <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white opacity-10 rounded-full blur-xl"></div>
+                <span className="text-emerald-100 font-bold uppercase tracking-widest text-[10px] z-10">Net Pay Payable</span>
+                <span className="text-2xl font-black text-white mt-1 z-10 tracking-tight">₹ {netPay.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits:2})}</span>
               </div>
-              <div className="flex justify-between text-slate-600">
-                <span>Total Deductions</span>
-                <span className="text-blue-900">: ₹ {totalDeductions.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-orange-900 pt-1 border-t border-dashed border-gray-200 font-bold">
-                <span>Net Pay</span>
-                <span>: ₹ {netPay.toFixed(2)}</span>
+
+              {/* Calculations summaries */}
+              <div className="p-6 flex flex-col justify-center relative">
+                <p className="font-bold text-slate-400 uppercase tracking-widest text-[9px] mb-1">Amount in Words</p>
+                <p className="text-sm font-semibold text-white tracking-wide">Rupees {numberToWords(netPay)}</p>
+                <div className="absolute top-0 right-0 h-full w-32 bg-gradient-to-l from-slate-800/50 to-transparent pointer-events-none"></div>
               </div>
             </div>
-          </div>
 
-          {/* Footer Signature segment */}
-          <div className="flex justify-between items-end mt-12 pt-6">
-            <div>
-              <p className="font-bold text-blue-900">Amount in Words:</p>
-              <p className="text-orange-800 font-black italic text-xs mt-0.5">Rupees {numberToWords(netPay)}</p>
+            {/* Footer Signature segment */}
+            <div className="flex justify-between items-end pb-8">
+              <div className="text-[9px] text-slate-400 space-y-1">
+                <p className="font-bold text-slate-600 uppercase tracking-wider">Note:</p>
+                <p>• All amounts are in Indian Rupees (INR).</p>
+                <p>• This is a system generated salary slip and does not require a physical signature.</p>
+                <p>• For any discrepancies, please contact the HR / Payroll department within 7 days.</p>
+              </div>
+
+              <div className="text-center space-y-2">
+                <div className="border-b border-slate-300 pb-2 w-40 mx-auto">
+                  {/* Signature graphic/space */}
+                  <div className="font-serif text-lg italic text-slate-800 opacity-80 h-8 flex items-end justify-center">System Generated</div>
+                </div>
+                <p className="font-bold text-[9px] uppercase tracking-wider text-slate-500">Authorized Signatory</p>
+              </div>
             </div>
 
-            <div className="text-center space-y-1">
-              <div className="font-mono text-xs italic text-slate-500 font-bold border-b border-gray-300 pb-1">Aashu S.</div>
-              <p className="font-bold text-[9px] uppercase tracking-wider text-gray-400">Authorized Signatory</p>
             </div>
-          </div>
-
-          {/* Bottom disclaimer */}
-          <div className="text-center text-[9px] text-gray-400 mt-12 border-t border-gray-100 pt-4">
-            <p>This is a system generated salary slip and does not require physical signature.</p>
-            <p className="font-bold text-orange-700 mt-1">Thank you for your dedication and hard work!</p>
-          </div>
-
-          {/* Document Footer Bar */}
-          <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-r from-blue-700 to-indigo-950 flex items-center justify-between px-8 text-white text-[9px]">
-            <span>📞 +91 98765 43210</span>
-            <span>✉️ info@hatbaliyatechnologies.com</span>
-            <span>🌐 www.hatbaliyatechnologies.com</span>
           </div>
         </div>
-        </div>
-
       </div>
     </div>
   );
 }
+
