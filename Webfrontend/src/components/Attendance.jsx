@@ -20,7 +20,7 @@ const Attendance = () => {
   // Mark Attendance Modal State
   const [employees, setEmployees] = useState([]);
   const [isMarkModalOpen, setIsMarkModalOpen] = useState(false);
-  const [markForm, setMarkForm] = useState({ user_id: '', date: new Date().toISOString().split('T')[0], status: 'Absent', reason: '' });
+  const [markForm, setMarkForm] = useState({ user_id: '', date: new Date().toLocaleDateString('en-CA'), status: 'Absent', reason: '' });
 
   // Photo View Modal State
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
@@ -151,7 +151,7 @@ const Attendance = () => {
 
   const checkWFHStatus = async () => {
     try {
-      const today = new Date().toISOString().split('T')[0];
+      const today = new Date().toLocaleDateString('en-CA');
       const res = await axios.get(`/api/wfh/check/${today}`);
       if (res.data.success) {
         setIsWFHApproved(res.data.isApproved);
@@ -207,8 +207,7 @@ const Attendance = () => {
             recDateObj.getMonth() === currentMonth &&
             recDateObj.getDate() === currentDate;
 
-          const isUserMatch = String(rec.user_id) === String(user.id);
-          return isDateMatch && isUserMatch;
+          return isDateMatch;
         });
 
         console.debug('Today record found:', todayRec);
@@ -349,7 +348,7 @@ const Attendance = () => {
     }
 
     try {
-      const today = new Date().toISOString().split('T')[0];
+      const today = new Date().toLocaleDateString('en-CA'); // 'YYYY-MM-DD' in local time
       const now = new Date().toLocaleTimeString('en-GB'); // HH:MM:SS
       const res = await axios.post('/api/attendance/clock-in', {
         user_id: user.id,
@@ -418,7 +417,7 @@ const Attendance = () => {
     }
 
     try {
-      const today = new Date().toISOString().split('T')[0];
+      const today = new Date().toLocaleDateString('en-CA'); // 'YYYY-MM-DD' in local time
       const now = new Date().toLocaleTimeString('en-GB');
       const res = await axios.post('/api/attendance/clock-out', {
         user_id: user.id,
@@ -530,7 +529,7 @@ const Attendance = () => {
             <div className="flex flex-wrap items-center gap-3">
               <button
                 onClick={() => {
-                  setMarkForm({ user_id: '', date: new Date().toISOString().split('T')[0], status: 'Absent', reason: '' });
+                  setMarkForm({ user_id: '', date: new Date().toLocaleDateString('en-CA'), status: 'Absent', reason: '' });
                   setIsMarkModalOpen(true);
                 }}
                 className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-xl font-bold text-xs shadow-sm transition-all"

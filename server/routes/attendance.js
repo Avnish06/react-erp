@@ -301,6 +301,7 @@ router.get('/:user_id', verifyToken, async (req, res) => {
     const query = `
       SELECT 
           a.id, 
+          a.user_id,
           u.name as employee_name,
           a.date,
           a.clock_in,
@@ -327,6 +328,7 @@ router.get('/', verifyToken, checkPermission('view_attendance'), async (req, res
   const query = `
       SELECT 
           a.id, 
+          a.user_id,
           u.name as employee_name,
           a.date,
           a.clock_in,
