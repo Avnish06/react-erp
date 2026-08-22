@@ -13,6 +13,25 @@ router.post('/', verifyToken, (req, res) => {
   const query = 'INSERT INTO wfh_requests (user_id, date, reason) VALUES (?, ?, ?)';
   db.query(query, [user_id, date, reason], (err, result) => {
     if (err) return res.status(500).json({ success: false, message: 'DB error: ' + err.message });
+    
+    // Notify admins
+    const adminQuery = `SELECT id FROM users WHERE role IN ('Admin', 'Super Admin')`;
+    db.query(adminQuery, (adminErr, admins) => {
+      if (!adminErr && admins) {
+        db.query(`SELECT name FROM users WHERE id = ?`, [user_id], (uErr, uRes) => {
+          const empName = (!uErr && uRes.length > 0) ? uRes[0].name : 'An employee';
+          const title = 'New WFH Application';
+          const message = `${empName} applied for Work From Home on ${date}. Reason: ${reason}`;
+          admins.forEach(admin => {
+            db.query(
+              'INSERT INTO notifications (user_id, title, message, type, triggered_by, action_type) VALUES (?, ?, ?, ?, ?, ?)',
+              [admin.id, title, message, 'info', user_id, 'NEW_WFH_REQUEST']
+            );
+          });
+        });
+      }
+    });
+
     res.json({ success: true, message: 'WFH request submitted successfully', id: result.insertId });
   });
 });
