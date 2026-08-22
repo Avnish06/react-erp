@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+import autoTable from 'jspdf-autotable';
 import { Download, Edit, RefreshCw, Printer, Info, Save } from 'lucide-react';
 import { toast } from 'sonner';
 const logoImg = '/erp_logo.png';
@@ -114,70 +114,218 @@ export default function SalarySlipGenerator({ payroll = null, onClose }) {
   };
 
   const handleDownloadPDF = () => {
-    toast.info('Preparing PDF quality slip...');
-    const content = document.getElementById('salary-slip-content');
-    if (!content) return;
+    toast.info('Generating precise PDF slip...');
+    const doc = new jsPDF('p', 'mm', 'a4');
+    
+    // Header Banner
+    doc.setFillColor(15, 23, 42); // slate-900
+    doc.rect(0, 0, 210, 8, 'F');
+    
+    try {
+      doc.addImage(logoImg, 'PNG', 15, 15, 40, 15);
+    } catch (e) {
+      console.warn("Logo could not be added to PDF", e);
+    }
+    
+    doc.setFontSize(22);
+    doc.setTextColor(15, 23, 42);
+    doc.setFont('helvetica', 'bold');
+    doc.text('HATBALIYA', 60, 22);
+    doc.setTextColor(29, 78, 216); // blue-700
+    doc.text('TECHNOLOGIES', 105, 22);
+    
+    doc.setFontSize(8);
+    doc.setTextColor(100, 116, 139); // slate-500
+    doc.setFont('helvetica', 'normal');
+    doc.text(slip.tagline.toUpperCase(), 60, 27);
+    
+    // Address & Contact
+    doc.setDrawColor(226, 232, 240); // slate-200
+    doc.line(60, 30, 60, 45); // vertical line
+    
+    doc.setFontSize(8);
+    doc.text(slip.address, 65, 33);
+    doc.text(`Phone: ${slip.phone}  |  Email: ${slip.email}`, 65, 38);
+    doc.text(`Website: ${slip.website}  |  GSTIN: ${slip.gstin}`, 65, 43);
+    
+    // Salary Slip Title Box
+    doc.setFillColor(15, 23, 42); // slate-900
+    doc.rect(140, 15, 55, 10, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('SALARY SLIP', 167.5, 22, { align: 'center' });
+    
+    doc.setTextColor(100, 116, 139);
+    doc.setFontSize(8);
+    doc.text('FOR THE MONTH OF', 167.5, 32, { align: 'center' });
+    doc.setTextColor(15, 23, 42);
+    doc.setFontSize(12);
+    doc.text(slip.monthYear || 'N/A', 167.5, 38, { align: 'center' });
+    
+    // Draw horizontal line separator
+    doc.line(15, 52, 195, 52);
+    
+    // Metadata block
+    // Employee Info
+    doc.setFontSize(9);
+    doc.setTextColor(100, 116, 139);
+    doc.text('Employee Name :', 15, 62);
+    doc.setTextColor(15, 23, 42);
+    doc.setFont('helvetica', 'bold');
+    doc.text(slip.employeeName || '-', 45, 62);
+    
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 116, 139);
+    doc.text('Father\'s Name :', 15, 69);
+    doc.setTextColor(15, 23, 42);
+    doc.text(slip.fatherName || '-', 45, 69);
+    
+    doc.setTextColor(100, 116, 139);
+    doc.text('Employee Code :', 15, 76);
+    doc.setTextColor(15, 23, 42);
+    doc.text(slip.employeeCode || '-', 45, 76);
+    
+    doc.setTextColor(100, 116, 139);
+    doc.text('Location :', 15, 83);
+    doc.setTextColor(15, 23, 42);
+    doc.text(slip.location || '-', 45, 83);
+    
+    // Work Info
+    doc.setTextColor(100, 116, 139);
+    doc.text('Employee ID :', 105, 62);
+    doc.setTextColor(15, 23, 42);
+    doc.setFont('helvetica', 'bold');
+    doc.text(slip.employeeId || '-', 135, 62);
+    
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 116, 139);
+    doc.text('Date of Joining :', 105, 69);
+    doc.setTextColor(15, 23, 42);
+    doc.text(slip.joiningDate || '-', 135, 69);
+    
+    doc.setTextColor(100, 116, 139);
+    doc.text('Department :', 105, 76);
+    doc.setTextColor(15, 23, 42);
+    doc.text(slip.department || '-', 135, 76);
+    
+    doc.setTextColor(100, 116, 139);
+    doc.text('Designation :', 105, 83);
+    doc.setTextColor(15, 23, 42);
+    doc.text(slip.designation || '-', 135, 83);
+    
+    doc.setTextColor(100, 116, 139);
+    doc.text('Working Days :', 105, 90);
+    doc.setTextColor(15, 23, 42);
+    doc.text(slip.workingDays.toString() || '0', 135, 90);
 
-    // Create a hidden iframe
-    const iframe = document.createElement('iframe');
-    iframe.style.position = 'fixed';
-    iframe.style.right = '0';
-    iframe.style.bottom = '0';
-    iframe.style.width = '0';
-    iframe.style.height = '0';
-    iframe.style.border = '0';
-    document.body.appendChild(iframe);
-
-    // Get styles to inject
-    const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
-      .map(el => el.outerHTML)
-      .join('\n');
-
-    const iframeDoc = iframe.contentWindow.document;
-    iframeDoc.open();
-    iframeDoc.write(`
-      <html class="light" style="color-scheme: light !important;">
-        <head>
-          <title>Salary_Slip_${slip.employeeName.replace(/\s+/g, '_')}_${slip.monthYear}</title>
-          ${styles}
-          <style>
-            :root {
-              color-scheme: light !important;
-            }
-            @media print {
-              *, ::before, ::after {
-                -webkit-print-color-adjust: exact !important; 
-                print-color-adjust: exact !important;
-              }
-              html, body {
-                background-color: #ffffff !important;
-                color: #0f172a !important;
-              }
-              @page { size: A4 portrait; margin: 0; }
-            }
-          </style>
-        </head>
-        <body style="background: white !important; margin: 0;">
-          <div style="background-color: white;">
-            ${content.outerHTML}
-          </div>
-        </body>
-      </html>
-    `);
-    iframeDoc.close();
-
-    // Wait for styles/fonts to apply then print
-    setTimeout(() => {
-      try {
-        iframe.contentWindow.focus();
-        iframe.contentWindow.print();
-        setTimeout(() => document.body.removeChild(iframe), 1000);
-        toast.success('Print dialog opened successfully!');
-      } catch (err) {
-        toast.error('Failed to open print dialog');
-        console.error(err);
-      }
-    }, 500);
+    doc.setTextColor(100, 116, 139);
+    doc.text('Pay Date :', 160, 90);
+    doc.setTextColor(15, 23, 42);
+    doc.text(slip.paymentDate || '-', 180, 90);
+    
+    // Bank details Box
+    doc.setDrawColor(226, 232, 240);
+    doc.setFillColor(248, 250, 252);
+    doc.rect(15, 97, 180, 25, 'FD');
+    
+    doc.setTextColor(100, 116, 139);
+    doc.text('Bank Name :', 20, 105);
+    doc.setTextColor(15, 23, 42);
+    doc.setFont('helvetica', 'bold');
+    doc.text(slip.bankName || '-', 45, 105);
+    
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 116, 139);
+    doc.text('Bank A/C No. :', 105, 105);
+    doc.setTextColor(15, 23, 42);
+    doc.text(slip.bankAcc || '-', 130, 105);
+    
+    doc.setTextColor(100, 116, 139);
+    doc.text('IFSC Code :', 20, 115);
+    doc.setTextColor(15, 23, 42);
+    doc.text(slip.ifscCode || '-', 45, 115);
+    
+    doc.setTextColor(100, 116, 139);
+    doc.text('PAN No. :', 105, 115);
+    doc.setTextColor(15, 23, 42);
+    doc.text(slip.panNo || '-', 130, 115);
+    
+    // Earnings Table
+    autoTable(doc, {
+      startY: 130,
+      margin: { left: 15, right: 110 },
+      headStyles: { fillColor: [15, 23, 42], textColor: 255, fontSize: 9, fontStyle: 'bold' },
+      bodyStyles: { fontSize: 9, textColor: [51, 65, 85] },
+      alternateRowStyles: { fillColor: [248, 250, 252] },
+      footStyles: { fillColor: [241, 245, 249], textColor: [15, 23, 42], fontSize: 9, fontStyle: 'bold' },
+      head: [['EARNINGS', 'AMOUNT']],
+      body: [
+        ['Basic Salary', Number(slip.basicSalary).toLocaleString('en-IN', {minimumFractionDigits: 2})],
+        ['House Rent Allowance', Number(slip.hra).toLocaleString('en-IN', {minimumFractionDigits: 2})],
+        ['Conveyance', Number(slip.conveyance).toLocaleString('en-IN', {minimumFractionDigits: 2})],
+        ['Special Allowance', Number(slip.specialAllowance).toLocaleString('en-IN', {minimumFractionDigits: 2})],
+        ['Medical Allowance', Number(slip.medicalAllowance).toLocaleString('en-IN', {minimumFractionDigits: 2})],
+        ['LTA', Number(slip.lta).toLocaleString('en-IN', {minimumFractionDigits: 2})],
+        ['Other Allowance', Number(slip.otherAllowance).toLocaleString('en-IN', {minimumFractionDigits: 2})]
+      ],
+      foot: [['Total Earnings', 'Rs. ' + Number(totalEarnings).toLocaleString('en-IN', {minimumFractionDigits: 2})]]
+    });
+    
+    // Deductions Table
+    autoTable(doc, {
+      startY: 130,
+      margin: { left: 105, right: 15 },
+      headStyles: { fillColor: [15, 23, 42], textColor: 255, fontSize: 9, fontStyle: 'bold' },
+      bodyStyles: { fontSize: 9, textColor: [51, 65, 85] },
+      alternateRowStyles: { fillColor: [248, 250, 252] },
+      footStyles: { fillColor: [241, 245, 249], textColor: [15, 23, 42], fontSize: 9, fontStyle: 'bold' },
+      head: [['DEDUCTIONS', 'AMOUNT']],
+      body: [
+        ['Provident Fund (PF)', Number(slip.pf).toLocaleString('en-IN', {minimumFractionDigits: 2})],
+        ['Employee ESI', Number(slip.esi).toLocaleString('en-IN', {minimumFractionDigits: 2})],
+        ['Professional Tax', Number(slip.profTax).toLocaleString('en-IN', {minimumFractionDigits: 2})],
+        ['Income Tax (TDS)', Number(slip.tds).toLocaleString('en-IN', {minimumFractionDigits: 2})],
+        ['Leave Deduction', Number(slip.leaveDeduction).toLocaleString('en-IN', {minimumFractionDigits: 2})],
+        ['Other Deduction', Number(slip.otherDeduction).toLocaleString('en-IN', {minimumFractionDigits: 2})]
+      ],
+      foot: [['Total Deductions', 'Rs. ' + Number(totalDeductions).toLocaleString('en-IN', {minimumFractionDigits: 2})]]
+    });
+    
+    const finalY = doc.lastAutoTable.finalY || 200;
+    
+    // Net Pay Box
+    doc.setFillColor(5, 150, 105); // emerald-600
+    doc.rect(15, finalY + 10, 180, 25, 'F');
+    
+    doc.setTextColor(209, 250, 229); // emerald-100
+    doc.setFontSize(10);
+    doc.text('NET PAYABLE', 25, finalY + 18);
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Rs. ' + Number(netPay).toLocaleString('en-IN', {minimumFractionDigits: 2}), 25, finalY + 28);
+    
+    doc.setFontSize(9);
+    doc.setTextColor(209, 250, 229);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Amount in Words:', 100, finalY + 18);
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Rupees ' + numberToWords(netPay), 100, finalY + 26);
+    
+    // Footer
+    doc.setFontSize(8);
+    doc.setTextColor(100, 116, 139);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Note: This is a system generated salary slip and does not require a physical signature.', 15, 280);
+    doc.text('Authorized Signatory', 160, 280);
+    
+    doc.save(`Salary_Slip_${slip.employeeName.replace(/\s+/g, '_')}_${slip.monthYear}.pdf`);
+    toast.success('Salary Slip PDF Downloaded!');
   };
 
   return (
