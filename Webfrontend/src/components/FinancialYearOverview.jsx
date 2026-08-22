@@ -108,7 +108,7 @@ const FinancialYearOverview = () => {
 
       // Build earning data (simulate from payroll if API doesn't have dedicated endpoint)
       const monthlyExpenditures = payroll.monthly_breakdown || MONTHS.map((m, i) => ({
-        month: m, value: Math.floor(Math.random() * 500000) + 200000
+        month: m, value: 0
       }));
 
       const totalExpenditure = monthlyExpenditures.reduce((s, m) => s + (m.value || m.total || 0), 0);
@@ -118,7 +118,7 @@ const FinancialYearOverview = () => {
       const monthlyEarning = MONTHS.map((m, i) => ({
         month: m,
         label: m,
-        value: payroll.monthly_revenue?.[i] || Math.floor(totalExpenditure / 12 * (1.2 + Math.random() * 0.3))
+        value: payroll.monthly_revenue?.[i] || 0
       }));
 
       if (!totalEarning) totalEarning = monthlyEarning.reduce((s, d) => s + d.value, 0);
@@ -126,7 +126,7 @@ const FinancialYearOverview = () => {
       setEarningData({
         total: totalEarning,
         monthly: monthlyEarning,
-        growth: '+12.4%',
+        growth: '+0.0%',
         isUp: true
       });
 
@@ -136,7 +136,7 @@ const FinancialYearOverview = () => {
           label: MONTHS[i] || m.month || m.label || m,
           value: m.value || m.total || 0
         })),
-        growth: '+8.2%',
+        growth: '+0.0%',
         isUp: true
       });
 
@@ -147,10 +147,10 @@ const FinancialYearOverview = () => {
         name: emp.name || 'Employee',
         role: emp.role || emp.designation || 'Staff',
         department: emp.department || 'General',
-        score: Math.floor(60 + Math.random() * 40),
-        tasks_done: Math.floor(5 + Math.random() * 25),
-        attendance: Math.floor(75 + Math.random() * 25),
-        salary: emp.salary || Math.floor(30000 + Math.random() * 70000),
+        score: emp.score || 0,
+        tasks_done: emp.tasks_done || 0,
+        attendance: emp.attendance || 0,
+        salary: emp.salary || 0,
       }));
       setEmployeePerf(empPerf);
 
@@ -160,12 +160,12 @@ const FinancialYearOverview = () => {
         const deptEmps = empPerf.filter(e => e.department === dept.name);
         const avgScore = deptEmps.length > 0
           ? Math.round(deptEmps.reduce((s, e) => s + e.score, 0) / deptEmps.length)
-          : Math.floor(65 + Math.random() * 30);
+          : 0;
         return {
           name: dept.name,
-          headcount: deptEmps.length || Math.floor(2 + Math.random() * 10),
+          headcount: deptEmps.length || 0,
           avg_score: avgScore,
-          total_salary: deptEmps.reduce((s, e) => s + e.salary, 0) || Math.floor(200000 + Math.random() * 500000),
+          total_salary: deptEmps.reduce((s, e) => s + e.salary, 0) || 0,
           color: DEPT_COLORS[i % DEPT_COLORS.length],
         };
       });
@@ -302,12 +302,12 @@ const FinancialYearOverview = () => {
             <StatCard
               label="Total Earning" value={fmt(summary.total_earning)} sub={`FY ${year}`}
               icon={<TrendingUp size={20} />} gradient="from-emerald-500 to-teal-600"
-              trend="+12.4%" trendUp={true}
+              trend={earningData?.growth || '0.0%'} trendUp={earningData?.isUp ?? true}
             />
             <StatCard
               label="Total Expenditure" value={fmt(summary.total_expenditure)} sub="Salary & Costs"
               icon={<DollarSign size={20} />} gradient="from-blue-500 to-indigo-600"
-              trend="+8.2%" trendUp={true}
+              trend={expenditureData?.growth || '0.0%'} trendUp={expenditureData?.isUp ?? true}
             />
             <StatCard
               label="Net Profit" value={fmt(summary.net_profit)}
@@ -320,7 +320,7 @@ const FinancialYearOverview = () => {
               label="Avg Performance" value={`${summary.avg_performance}%`}
               sub={`${summary.total_employees} Employees`}
               icon={<Star size={20} />} gradient="from-orange-500 to-amber-600"
-              trend="+5.1%" trendUp={true}
+              trend="0.0%" trendUp={true}
             />
           </div>
 
