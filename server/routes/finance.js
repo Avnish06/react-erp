@@ -95,4 +95,44 @@ router.delete('/transactions/:id', verifyToken, (req, res) => {
   });
 });
 
+// GET /api/finance/summary
+router.get('/summary', verifyToken, (req, res) => {
+  const year = req.query.year || new Date().getFullYear();
+  const q = `
+    SELECT 
+      MONTH(date) as month_num,
+      type,
+      SUM(amount_base) as total
+    FROM finance_transactions
+    WHERE YEAR(date) = ?
+    GROUP BY MONTH(date), type
+  `;
+  db.query(q, [year], (err, results) => {
+    if (err) return res.status(500).json({ success: false, error: err.message });
+    
+    const monthly_revenue = Array(12).fill(0);
+    const monthly_breakdown = Array(12).fill(0).map((_, i) => ({ month: i+1, value: 0 }));
+    let total_revenue = 0;
+    
+    results.forEach(row => {
+      const idx = row.month_num - 1;
+      if (row.type === 'income') {
+        monthly_revenue[idx] = row.total;
+        total_revenue += row.total;
+      } else if (row.type === 'expense') {
+        monthly_breakdown[idx].value = row.total;
+      }
+    });
+
+    res.json({
+      success: true,
+      data: {
+        total_revenue,
+        monthly_revenue,
+        monthly_breakdown
+      }
+    });
+  });
+});
+
 module.exports = router;

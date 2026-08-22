@@ -97,7 +97,7 @@ const FinancialYearOverview = () => {
     setLoading(true);
     try {
       const [payrollRes, empRes, deptRes] = await Promise.all([
-        axios.get('/api/payroll/summary', { params: { year } }).catch(() => ({ data: { data: null } })),
+        axios.get('/api/finance/summary', { params: { year } }).catch(() => ({ data: { data: null } })),
         axios.get('/api/employees/list').catch(() => ({ data: { data: [] } })),
         axios.get('/api/departments').catch(() => ({ data: { departments: [] } })),
       ]);
