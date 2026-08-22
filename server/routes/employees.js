@@ -340,7 +340,7 @@ router.delete('/:id', verifyToken, checkPermission('manage_users'), async (req, 
   const userId = req.params.id;
   try {
     // 1. Fetch email to find the user in Colovo DB
-    const [userRows] = await db.promise().query('SELECT email FROM user_identities WHERE id = ?', [userId]);
+    const [userRows] = await db.promise.query('SELECT email FROM user_identities WHERE id = ?', [userId]);
     
     if (userRows.length > 0) {
       const email = userRows[0].email;
@@ -363,7 +363,7 @@ router.delete('/:id', verifyToken, checkPermission('manage_users'), async (req, 
     }
 
     // 3. Delete from local ERP (Force delete ignoring FKs just in case)
-    const dbConn = await db.promise().getConnection();
+    const dbConn = await db.promise.getConnection();
     try {
       await dbConn.query('SET FOREIGN_KEY_CHECKS=0');
       // Also delete from profile tables so they don't linger
