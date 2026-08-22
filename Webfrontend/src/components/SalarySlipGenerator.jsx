@@ -9,7 +9,7 @@ export default function SalarySlipGenerator({ payroll = null, onClose }) {
   const [slip, setSlip] = useState({
     companyName: 'HATBALIYA TECHNOLOGIES',
     tagline: 'Your Trusted Technology Partner',
-    address: 'A-Block, Sector-63, Noida, Uttar Pradesh - 201301',
+    address: 'Plot 93, Rajendra Park, Sector 105, Gurugram – 122001',
     phone: '+91 98765 43210',
     email: 'info@hatbaliyatechnologies.com',
     website: 'www.hatbaliyatechnologies.com',
